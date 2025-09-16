@@ -1,3 +1,7 @@
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Snackbar, Alert } from "@mui/material";
 import { 
   Box, 
   MenuItem, 
@@ -5,11 +9,10 @@ import {
   InputAdornment, 
   IconButton 
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import AddIcon from "@mui/icons-material/Add";
 import styled from "@emotion/styled";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { RTOContext } from "../../Context/RTOContext";
 
 const MainContainer = styled(Box)`
   display: grid;
@@ -39,6 +42,10 @@ const IconButtonStyle = styled(IconButton)`
 `;
 
 const RTOForm = () => {
+  const navigate = useNavigate();
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const { submitRTO } = useContext(RTOContext);
   const couriers = [
     "Delhivery",
     "Blue Dart",
@@ -55,12 +62,31 @@ const RTOForm = () => {
   ];
 
   const [skuCode, setSkuCode] = useState("");
-  const [sapCode, setSapCode] = useState("");
   const [productTitle, setProductTitle] = useState("");
   const [isVerified, setIsVerified] = useState(false);
 
   // Store multiple rows (courier + return qty)
   const [fields, setFields] = useState([{ courier: "", returnQty: "" }]);
+
+  //Send Data to Context
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const rtoData = {
+      skuCode,
+      productTitle,
+      fields, // all couriers + return qty
+      date: new Date().toISOString(),
+    };
+
+    submitRTO(rtoData);
+    setOpenSnackbar(true);
+
+    // Reset form
+    setSkuCode("");
+    setProductTitle("");
+    setFields([{ courier: "", returnQty: "" }]);
+  };
 
   // Add new row
   const addField = () => {
@@ -80,7 +106,6 @@ const RTOForm = () => {
       const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
       if (res.data.success) {
         setIsVerified(true);
-        setSapCode(res.data.data.details?.sapcode || "");
         setProductTitle(res.data.data.sku?.name || "");
       } else {
         resetSkuState();
@@ -93,7 +118,6 @@ const RTOForm = () => {
   // Reset SKU-related fields
   const resetSkuState = () => {
     setIsVerified(false);
-    setSapCode("");
     setProductTitle("");
   };
 
@@ -111,7 +135,7 @@ const RTOForm = () => {
   }, [skuCode]);
 
   return (
-    <MainContainer>
+    <MainContainer component="form" onSubmit={handleSubmit}>
       {/* SKU Input */}
       <FieldContainer>
         <TextField
@@ -137,6 +161,11 @@ const RTOForm = () => {
         variant="outlined"
         value={productTitle}
         onChange={(e) => setProductTitle(e.target.value)}
+        slotProps={{
+            input: {
+              readOnly: true,
+            },
+          }}
       />
 
       {/* Order Details */}
@@ -201,14 +230,33 @@ const RTOForm = () => {
 
       {/* Submit & Total Return */}
       <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <button style={{ display: "flex", width: "68%" }} className="learn-more">
+        <button 
+          type="submit" 
+          style={{ display: "flex", width: "68%" }} 
+          className="learn-more"
+        >
           <span className="circle" aria-hidden="true">
             <span className="icon arrow"></span>
           </span>
-          <span style={{textTransform: "none"}} className="button-text">Submit RTO for Verification</span>
+          <span style={{textTransform: "none"}} className="button-text">
+            Submit RTO for Verification
+          </span>
         </button>
         <TextField style={{ width: "29%" }} type="number" label="Total Return ?" variant="outlined" required />
       </Box>
+
+      {/* // Snackbar */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: "100%" }}>
+          RTO submitted successfully!
+        </Alert>
+      </Snackbar>
+
     </MainContainer>
   );
 };
