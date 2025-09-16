@@ -24,6 +24,18 @@ const FieldContainer = styled(Box)`
   height: 100%;
   display: flex;
   gap: 20px;
+  align-items: center;
+`;
+
+const IconButtonStyle = styled(IconButton)`
+  background: none;
+  width: 49px;
+  height: 49px;
+  margin: 5px -5px 5px 0px;
+  &:hover {
+    background: black;
+    color: white;
+  }
 `;
 
 const RTOForm = () => {
@@ -149,10 +161,17 @@ const RTOForm = () => {
       </FieldContainer>
 
       {/* Pickup Partners & Return Qty Rows */}
+
       {fields.map((field, index) => (
         <FieldContainer key={index}>
+
+          {/* Add Button */}
+          <IconButtonStyle color="primary" onClick={addField} sx={{ alignSelf: "flex-start" }}>
+            <AddIcon />
+          </IconButtonStyle>
+
           <TextField
-            style={{ width: "70%" }}
+            style={{ width: "58%" }}
             select
             label="Pickup Partner"
             variant="outlined"
@@ -176,13 +195,9 @@ const RTOForm = () => {
             onChange={(e) => handleChange(index, "returnQty", e.target.value)}
             required
           />
+
         </FieldContainer>
       ))}
-
-      {/* Add Button */}
-      <IconButton color="primary" onClick={addField} sx={{ alignSelf: "flex-start" }}>
-        <AddIcon />
-      </IconButton>
 
       {/* Submit & Total Return */}
       <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -190,7 +205,7 @@ const RTOForm = () => {
           <span className="circle" aria-hidden="true">
             <span className="icon arrow"></span>
           </span>
-          <span className="button-text">Submit RTO</span>
+          <span style={{textTransform: "none"}} className="button-text">Submit RTO for Verification</span>
         </button>
         <TextField style={{ width: "29%" }} type="number" label="Total Return ?" variant="outlined" required />
       </Box>
