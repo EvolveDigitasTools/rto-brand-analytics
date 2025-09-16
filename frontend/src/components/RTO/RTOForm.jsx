@@ -42,6 +42,7 @@ const IconButtonStyle = styled(IconButton)`
 `;
 
 const RTOForm = () => {
+  
   const navigate = useNavigate();
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
@@ -61,12 +62,20 @@ const RTOForm = () => {
     "Meolaa",
   ];
 
+  const itemCondition = [
+    "Good",
+    "Damaged", 
+    "Missing", 
+    "Wrong Return",
+    "Used",
+  ];
+
   const [skuCode, setSkuCode] = useState("");
   const [productTitle, setProductTitle] = useState("");
   const [isVerified, setIsVerified] = useState(false);
 
-  // Store multiple rows (courier + return qty)
-  const [fields, setFields] = useState([{ courier: "", returnQty: "" }]);
+  // Store multiple rows (courier + return qty, item condition)
+  const [fields, setFields] = useState([{ courier: "", returnQty: "", itemCondition: "" }]);
 
   //Send Data to Context
   const handleSubmit = (e) => {
@@ -75,6 +84,10 @@ const RTOForm = () => {
     const rtoData = {
       skuCode,
       productTitle,
+      // awbId,
+      // orderId,
+      // orderDate,
+      // returnDate,
       fields, // all couriers + return qty
       date: new Date().toISOString(),
     };
@@ -85,12 +98,12 @@ const RTOForm = () => {
     // Reset form
     setSkuCode("");
     setProductTitle("");
-    setFields([{ courier: "", returnQty: "" }]);
+    setFields([{ courier: "", returnQty: "", itemCondition: "" }]);
   };
 
   // Add new row
   const addField = () => {
-    setFields([...fields, { courier: "", returnQty: "" }]);
+    setFields([...fields, { courier: "", returnQty: "", itemCondition: "" }]);
   };
 
   // Update field value
@@ -134,12 +147,17 @@ const RTOForm = () => {
     return () => clearTimeout(timer);
   }, [skuCode]);
 
+  const totalReturn = fields.reduce((acc, field) => {
+    const qty = parseInt(field.returnQty, 10);
+    return acc + (isNaN(qty) ? 0 : qty);
+  }, 0);
+
   return (
     <MainContainer component="form" onSubmit={handleSubmit}>
       {/* SKU Input */}
       <FieldContainer>
         <TextField
-          style={{ width: "100%" }}
+          style={{ width: "24%" }}
           label="SKU Code"
           variant="outlined"
           required
@@ -153,10 +171,9 @@ const RTOForm = () => {
             ),
           }}
         />
-      </FieldContainer>
-
-      {/* Product Title */}
+        {/* Product Title */}
       <TextField
+        style={{ width: "75%" }}
         label="Product Title"
         variant="outlined"
         value={productTitle}
@@ -167,10 +184,12 @@ const RTOForm = () => {
             },
           }}
       />
+      </FieldContainer>
 
       {/* Order Details */}
       <FieldContainer>
-        <TextField style={{ width: "35%" }} label="Order ID" variant="outlined" required />
+        <TextField style={{ width: "35%" }} label="AWB ID" variant="outlined" required />        
+        <TextField style={{ width: "35%" }} label="Order ID" variant="outlined" optional />
         <TextField
           style={{ width: "35%" }}
           type="date"
@@ -200,7 +219,7 @@ const RTOForm = () => {
           </IconButtonStyle>
 
           <TextField
-            style={{ width: "58%" }}
+            style={{ width: "35%" }}
             select
             label="Pickup Partner"
             variant="outlined"
@@ -215,6 +234,24 @@ const RTOForm = () => {
               </MenuItem>
             ))}
           </TextField>
+
+          <TextField
+            style={{ width: "30%" }}
+            select
+            label="Item Condition"
+            variant="outlined"
+            value={field.itemCondition}
+            onChange={(e) => handleChange(index, "itemCondition", e.target.value)}
+            required
+          >
+            <MenuItem value="">-- Select Condition --</MenuItem>
+            {itemCondition.map((itemCondition, i) => (
+              <MenuItem key={i} value={itemCondition}>
+                {itemCondition}
+              </MenuItem>
+            ))}
+          </TextField>  
+
           <TextField
             style={{ width: "30%" }}
             type="number"
@@ -242,7 +279,14 @@ const RTOForm = () => {
             Submit RTO for Verification
           </span>
         </button>
-        <TextField style={{ width: "29%" }} type="number" label="Total Return ?" variant="outlined" required />
+        <TextField 
+          style={{ width: "29%" }} 
+          type="number" 
+          label="Total Return" 
+          variant="outlined" 
+          value={totalReturn}
+          InputProps={{ readOnly: true, }}
+        />
       </Box>
 
       {/* // Snackbar */}

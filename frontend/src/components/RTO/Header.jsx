@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { RTOContext } from "../../Context/RTOContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -15,6 +15,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import AddIcon from "@mui/icons-material/Add";
+import FlakyIcon from '@mui/icons-material/Flaky';
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
@@ -23,18 +24,23 @@ const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 function Header() {
   const navigate = useNavigate();
+  const location = useLocation(); // <-- Get current path
   const { submittedRTOs } = useContext(RTOContext);
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
+  const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
+  const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleCloseUserMenu = () => setAnchorElUser(null);
+
+  // Determine button text & navigation based on current page
+  const isSubmittedPage = location.pathname === "/submitted-rto";
+  const buttonText = isSubmittedPage ? "Back to Submission" : `Check Submitted RTO (${submittedRTOs.length})`;
+  const buttonClick = () => {
+    if (isSubmittedPage) navigate("/");
+    else navigate("/submitted-rto");
+  };
 
   return (
     <AppBar position="static" style={{ background: "#424141" }}>
@@ -79,16 +85,16 @@ function Header() {
             RTO Submission
           </Typography>
 
-          {/* Mobile Check Submitted RTO Button */}
+          {/* Mobile Check Button */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
             <Button
               variant="contained"
               color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/submitted-rto")}
+              startIcon={<FlakyIcon />}
+              onClick={buttonClick}
               sx={{ textTransform: "none", fontWeight: "bold", borderRadius: "12px", boxShadow: 2 }}
             >
-              Check Submitted RTO ({submittedRTOs.length})
+              {buttonText}
             </Button>
           </Box>
 
@@ -125,13 +131,14 @@ function Header() {
           {/* Desktop Buttons */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
             <Button
+              style={{background: "#ffffff", color: "#424141"}}
               variant="contained"
               color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/submitted-rto")}
+              startIcon={<FlakyIcon />}
+              onClick={buttonClick}
               sx={{ textTransform: "none", fontWeight: "bold", borderRadius: "12px", boxShadow: 2 }}
             >
-              Check Submitted RTO ({submittedRTOs.length})
+              {buttonText}
             </Button>
 
             <Tooltip title="Profile">
