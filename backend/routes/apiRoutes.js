@@ -1,24 +1,21 @@
 import express from "express";
-import db from "../db.js";
+import dbPromise from "../db.js";
 import { getVendors, getPoCodes, getSkuByCode } from "../controllers/apiController.js";
 
 const router = express.Router();
 
-// Route with type param for flexibility
-router.get("/", async (req, res) => {
-  const { type } = req.query;
+// Get submitted RTO data - Phase 1 workuing
+// router.get("/rto", async (req, res) => {
+//   try {
+//     const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY created_at DESC");
+//     res.json({ success: true, data: rows });
+//   } catch (error) {
+//     console.error("Error fetching RTO data:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
 
-  switch (type) {
-    case "vendors":
-      return getVendors(req, res);
-    case "po-codes":
-      return getPoCodes(req, res);
-    case "skuCode":
-      return getSkuByCode(req, res);
-    default:  
-      return res.status(400).json({ message: "Invalid type parameter" });
-  }
-});
+
 
 // Submit RTO data
 router.post("/rto", async (req, res) => {
@@ -82,14 +79,77 @@ router.post("/rto", async (req, res) => {
   }
 });
 
-// Get submitted RTO data
+// Get submitted RTO data - Phase 2 testing
+// router.get("/rto", async (req, res) => {
+//   try {
+//     const [rows] = await db.query(`
+//       SELECT 
+//         id,
+//         pickup_partner,
+//         sku_code,
+//         product_title,
+//         awb_id,
+//         order_id,
+//         courier,
+//         item_condition,
+//         claim_raised,
+//         ticket_id,
+//         comments,
+//         return_qty,
+//         DATE_FORMAT(order_date, '%d %b %Y %H:%i') AS order_date,
+//         DATE_FORMAT(return_date, '%d %b %Y %H:%i') AS return_date,
+//         DATE_FORMAT(created_at, '%d %b %Y %H:%i') AS created_at
+//       FROM rto_table
+//       ORDER BY created_at DESC
+//     `);
+
+//     res.json({ success: true, data: rows });
+//   } catch (error) {
+//     console.error("Error fetching RTO data:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// });
+
+// Route with type param for flexibility
 router.get("/rto", async (req, res) => {
+  let db;
   try {
-    const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY created_at DESC");
+    // Wait for database connection
+    db = await dbPromise;
+
+    const [rows] = await db.query(`
+      SELECT 
+        id,
+        pickup_partner,
+        sku_code,
+        product_title,
+        awb_id,
+        order_id,
+        courier,
+        item_condition,
+        claim_raised,
+        ticket_id,
+        comments,
+        return_qty,
+        order_date,
+        return_date,
+        created_at
+      FROM rto_submissions
+      ORDER BY created_at DESC
+    `);
     res.json({ success: true, data: rows });
   } catch (error) {
-    console.error("Error fetching RTO data:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error fetching RTO data:", {
+      message: error.message,
+      sqlMessage: error.sqlMessage,
+      code: error.code,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+      sqlError: error.sqlMessage || "No SQL message available",
+    });
   }
 });
 
