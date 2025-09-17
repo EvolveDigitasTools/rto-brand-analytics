@@ -1,14 +1,7 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Snackbar, Alert } from "@mui/material";
-import { 
-  Box, 
-  MenuItem, 
-  TextField, 
-  InputAdornment, 
-  IconButton 
-} from "@mui/material";
+import { Snackbar, Alert, Box, MenuItem, TextField, InputAdornment, IconButton } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -26,7 +19,6 @@ const MainContainer = styled(Box)`
 
 const FieldContainer = styled(Box)`
   width: 100%;
-  height: 100%;
   display: flex;
   gap: 20px;
   align-items: center;
@@ -44,122 +36,123 @@ const IconButtonStyle = styled(IconButton)`
 `;
 
 const RTOForm = () => {
-  
   const navigate = useNavigate();
   const [openSnackbar, setOpenSnackbar] = useState(false);
-
   const { submitRTO } = useContext(RTOContext);
+
   const couriers = [
-    "Delhivery",
-    "Blue Dart",
-    "Valmo",
-    "Shadowfax",
-    "Xpressbees",
-    "Amazon",
-    "Flipkart",
-    "Tata 1mg",
-    "Hyugai Life",
-    "Nimbus",
-    "DTDC",
-    "Meolaa",
+    "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpressbees",
+    "Amazon", "Flipkart", "Tata 1mg", "Hyugai Life", "Nimbus",
+    "DTDC", "Meolaa"
   ];
 
-  const itemCondition = [
-    "Good",
-    "Damaged", 
-    "Missing", 
-    "Wrong Return",
-    "Used",
-  ];
+  const itemCondition = ["Good", "Damaged", "Missing", "Wrong Return", "Used"];
 
-  const [skuCode, setSkuCode] = useState("");
-  const [productTitle, setProductTitle] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
-  const [pickupPartner, setPickupPartner] = useState("");  
-
-  // Store multiple rows (courier + return qty, item condition)
+  // ✅ Single source of truth for all rows
   const [fields, setFields] = useState([
-    { awbId: "", orderId: "", courier: "", returnQty: "", itemCondition: "", claimRaised: "", ticketId: "" },
+    {
+      skuCode: "",
+      productTitle: "",
+      awbId: "",
+      orderId: "",
+      courier: "",
+      returnQty: "",
+      itemCondition: "",
+      claimRaised: "",
+      ticketId: ""
+    }
   ]);
 
-  //Send Data to Context
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const rtoData = {
-      skuCode,
-      productTitle,
-      pickupPartner,
-      fields,
-      date: new Date().toISOString(),
-    };
-    submitRTO(rtoData);
-    setOpenSnackbar(true);
+  const [pickupPartner, setPickupPartner] = useState("");
 
-    // Reset everything
-    setSkuCode("");
-    setProductTitle("");
-    setPickupPartner("");
-    setFields([{ awbId: "", orderId: "", itemCondition: "", claimRaised: "", ticketId: "", returnQty: "" }]);
-    setIsVerified(false);
-  };
-
-  // Add new row
+  // ✅ Add new row, copy first row's SKU/productTitle if available
   const addField = () => {
-    setFields([
-      ...fields,
-      { awbId: "", orderId: "", courier: "", returnQty: "", itemCondition: "", claimRaised: "", ticketId: "" },
+    setFields((prev) => [
+      ...prev,
+      {
+        skuCode: prev[0]?.skuCode || "",
+        productTitle: prev[0]?.productTitle || "",
+        awbId: "",
+        orderId: "",
+        courier: "",
+        returnQty: "",
+        itemCondition: "",
+        claimRaised: "",
+        ticketId: ""
+      }
     ]);
   };
 
-  // Delete added row
+  // ✅ Delete specific row
   const removeField = (index) => {
-    // Prevent deleting if there is only one row left
-    if (fields.length === 1) return;
-
-    const updatedFields = fields.filter((_, i) => i !== index);
-    setFields(updatedFields);
+    setFields((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Update field value
+  // ✅ Handle field changes
   const handleChange = (index, key, value) => {
-    const updatedFields = [...fields];
-    updatedFields[index][key] = value;
-    setFields(updatedFields);
-  };
+    setFields((prevFields) => {
+      if (!prevFields[index]) return prevFields;
+      const updatedFields = [...prevFields];
+      updatedFields[index] = { ...updatedFields[index], [key]: value };
+      return updatedFields;
+    });
 
-  // Fetch SKU data
-  const fetchSkuData = async (code) => {
-    try {
-      const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
-      if (res.data.success) {
-        setIsVerified(true);
-        setProductTitle(res.data.data.sku?.name || "");
-      } else {
-        resetSkuState();
-      }
-    } catch (err) {
-      resetSkuState();
+    if (key === "skuCode") {
+      const timer = setTimeout(() => fetchSkuData(value, index), 400);
+      return () => clearTimeout(timer);
     }
   };
 
-  // Reset SKU-related fields
-  const resetSkuState = () => {
-    setIsVerified(false);
-    setProductTitle("");
+  // ✅ Fetch SKU data and update product title
+  const fetchSkuData = async (code, index) => {
+    try {
+      const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
+      setFields((prevFields) => {
+        if (!prevFields[index]) return prevFields;
+        const updatedFields = [...prevFields];
+        updatedFields[index] = {
+          ...updatedFields[index],
+          productTitle: res.data.success ? res.data.data.sku?.name || "" : ""
+        };
+        return updatedFields;
+      });
+    } catch (err) {
+      setFields((prevFields) => {
+        if (!prevFields[index]) return prevFields;
+        const updatedFields = [...prevFields];
+        updatedFields[index] = { ...updatedFields[index], productTitle: "" };
+        return updatedFields;
+      });
+    }
   };
 
-  // Watch skuCode changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (skuCode.trim() !== "") {
-        fetchSkuData(skuCode);
-      } else {
-        resetSkuState();
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [skuCode]);
+  // ✅ Submit form
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    submitRTO({
+      pickupPartner,
+      fields,
+      date: new Date().toISOString()
+    });
 
+    setOpenSnackbar(true);
+
+    // Reset all fields
+    setPickupPartner("");
+    setFields([{
+      skuCode: "",
+      productTitle: "",
+      awbId: "",
+      orderId: "",
+      courier: "",
+      returnQty: "",
+      itemCondition: "",
+      claimRaised: "",
+      ticketId: ""
+    }]);
+  };
+
+  // ✅ Auto-total return quantity
   const totalReturn = fields.reduce((acc, field) => {
     const qty = parseInt(field.returnQty, 10);
     return acc + (isNaN(qty) ? 1 : qty);
@@ -167,9 +160,8 @@ const RTOForm = () => {
 
   return (
     <MainContainer component="form" onSubmit={handleSubmit}>
-        {/* Pickup Partner and Return Date */} 
+      {/* Pickup Partner + Return Date */}
       <FieldContainer>
-        {/* Pickup Partner */}
         <TextField
           style={{ width: "75%" }}
           select
@@ -183,7 +175,7 @@ const RTOForm = () => {
             <MenuItem key={i} value={courier}>{courier}</MenuItem>
           ))}
         </TextField>
-          {/* Return Date */}
+
         <TextField
           style={{ width: "25%" }}
           type="date"
@@ -194,160 +186,157 @@ const RTOForm = () => {
         />
       </FieldContainer>
 
-      {/* AWB and Order ID, Conditions and Return Qty Rows */}
-
+      {/* Row Mapping */}
       {fields.map((field, index) => {
-  const requiresClaim = ["Damaged", "Missing", "Wrong Return", "Used"].includes(field.itemCondition);
+        const requiresClaim = ["Damaged", "Missing", "Wrong Return", "Used"].includes(field.itemCondition);
 
-  return (
-    <FieldContainer style={{ display: "grid" }} key={index}>
-      {/* SKU Code and Title */}
-      <FieldContainer>
-        <TextField
-          style={{ width: "30%" }}
-          label="SKU Code"
-          variant="outlined"
-          required
-          value={skuCode}
-          onChange={(e) => setSkuCode(e.target.value)}
-          InputProps={{
-            endAdornment: isVerified && (
-              <InputAdornment position="end">
-                <CheckCircleIcon color="success" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        {/* Product Title */}
-        <TextField
-          style={{ width: "70%" }}
-          label="Product Title"
-          variant="outlined"
-          value={productTitle}
-          onChange={(e) => setProductTitle(e.target.value)}
-          slotProps={{
-            input: { readOnly: true },
-          }}
-        />
-      </FieldContainer>
+        return (
+          <FieldContainer style={{ display: "grid" }} key={index}>
+            {/* SKU Code + Product Title */}
+            <FieldContainer>
+              <TextField
+                style={{ width: "30%" }}
+                label="SKU Code"
+                variant="outlined"
+                required
+                value={field.skuCode}
+                onChange={(e) => handleChange(index, "skuCode", e.target.value)}
+                InputProps={{
+                  endAdornment: field.productTitle && (
+                    <InputAdornment position="end">
+                      <CheckCircleIcon color="success" />
+                    </InputAdornment>
+                  )
+                }}
+              />
 
-      {/* AWB ID, Order ID and Order Date */}
-      <FieldContainer>
-        <TextField style={{ width: "32%" }} label="AWB ID" variant="outlined" required />
-        <TextField style={{ width: "35%" }} label="Order ID" variant="outlined" />
-        <TextField
-          style={{ width: "35%" }}
-          type="date"
-          label="Order Date"
-          variant="outlined"
-          required
-          InputLabelProps={{ shrink: true }}
-        />
-      </FieldContainer>
+              <TextField
+                style={{ width: "70%" }}
+                label="Product Title"
+                variant="outlined"
+                value={field.productTitle}
+                InputProps={{ readOnly: true }}
+              />
+            </FieldContainer>
 
-      {/* Item Condition, Claim Raised, Ticket ID */}
-      <FieldContainer>
-        <TextField
-          style={{ width: "29.5%" }}
-          select
-          label="Item Condition"
-          variant="outlined"
-          value={field.itemCondition}
-          onChange={(e) => handleChange(index, "itemCondition", e.target.value)}
-          required
-        >
-          <MenuItem value="">-- Select Condition --</MenuItem>
-          {itemCondition.map((cond, i) => (
-            <MenuItem key={i} value={cond}>
-              {cond}
-            </MenuItem>
-          ))}
-        </TextField>
+            {/* AWB ID + Order ID + Date */}
+            <FieldContainer>
+              <TextField
+                style={{ width: "32%" }}
+                label="AWB ID"
+                variant="outlined"
+                required
+                value={field.awbId}
+                onChange={(e) => handleChange(index, "awbId", e.target.value)}
+              />
+              <TextField
+                style={{ width: "35%" }}
+                label="Order ID"
+                variant="outlined"
+                value={field.orderId}
+                onChange={(e) => handleChange(index, "orderId", e.target.value)}
+              />
+              <TextField
+                style={{ width: "35%" }}
+                type="date"
+                label="Order Date"
+                variant="outlined"
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </FieldContainer>
 
-        {requiresClaim && (
-          <TextField
-            style={{ width: "32%" }}
-            select
-            label="Claim Raised"
-            value={field.claimRaised}
-            onChange={(e) => handleChange(index, "claimRaised", e.target.value)}
-            required
-          >
-            <MenuItem value="">-- Select --</MenuItem>
-            <MenuItem value="Yes">Yes</MenuItem>
-            <MenuItem value="No">No</MenuItem>
-          </TextField>
-        )}
+            {/* Item Condition + Claim + Ticket ID */}
+            <FieldContainer>
+              <TextField
+                style={{ width: "29.5%" }}
+                select
+                label="Item Condition"
+                variant="outlined"
+                value={field.itemCondition}
+                onChange={(e) => handleChange(index, "itemCondition", e.target.value)}
+                required
+              >
+                <MenuItem value="">-- Select Condition --</MenuItem>
+                {itemCondition.map((c, i) => (
+                  <MenuItem key={i} value={c}>{c}</MenuItem>
+                ))}
+              </TextField>
 
-        {requiresClaim && field.claimRaised === "Yes" && (
-          <TextField
-            style={{ width: "32%" }}
-            label="Ticket ID"
-            value={field.ticketId}
-            onChange={(e) => handleChange(index, "ticketId", e.target.value)}
-            required
-          />
-        )}
-      </FieldContainer>
+              {requiresClaim && (
+                <TextField
+                  style={{ width: "32%" }}
+                  select
+                  label="Claim Raised"
+                  value={field.claimRaised}
+                  onChange={(e) => handleChange(index, "claimRaised", e.target.value)}
+                  required
+                >
+                  <MenuItem value="">-- Select --</MenuItem>
+                  <MenuItem value="Yes">Yes</MenuItem>
+                  <MenuItem value="No">No</MenuItem>
+                </TextField>
+              )}
 
-      {/* Comments */}
-      <TextField
-        style={{ width: "100%", maxHeight: "80px" }}
-        type="text"
-        label="Comments"
-        variant="outlined"
-        value={field.returnQty}
-        onChange={(e) => handleChange(index, "returnQty", e.target.value)}
-        required
-      />
+              {requiresClaim && field.claimRaised === "Yes" && (
+                <TextField
+                  style={{ width: "32%" }}
+                  label="Ticket ID"
+                  value={field.ticketId}
+                  onChange={(e) => handleChange(index, "ticketId", e.target.value)}
+                  required
+                />
+              )}
+            </FieldContainer>
 
-      {/* Add/Delete Buttons - ONLY ON LAST ROW */}
-      {index === fields.length - 1 && (
-        <FieldContainer style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-          {/* Add Button */}
-          <IconButtonStyle color="primary" onClick={addField}>
-            <AddIcon />
-          </IconButtonStyle>
+            {/* Comments */}
+            <TextField
+              style={{ width: "100%", maxHeight: "80px" }}
+              type="text"
+              label="Comments"
+              variant="outlined"
+              required
+            />
 
-          {/* Delete Button (only if more than one row) */}
-          {fields.length > 1 && (
-            <IconButtonStyle color="error" onClick={() => removeField(index)}>
-              <DeleteIcon />
-            </IconButtonStyle>
-          )}
-        </FieldContainer>
-      )}
-    </FieldContainer>
-  );
-})}
+            {/* Add / Delete buttons */}
+            <FieldContainer style={{ justifyContent: "center" }}>
+              {index === fields.length - 1 && (
+                <IconButtonStyle color="primary" onClick={addField}>
+                  <AddIcon />
+                </IconButtonStyle>
+              )}
+              {fields.length > 1 && (
+                <IconButtonStyle color="error" onClick={() => removeField(index)}>
+                  <DeleteIcon />
+                </IconButtonStyle>
+              )}
+            </FieldContainer>
+          </FieldContainer>
+        );
+      })}
 
-
-
-      {/* Add Button, Submit & Total Return */}
+      {/* Submit + Total Return */}
       <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px" }}>
-        <button 
-          type="submit" 
-          style={{ display: "flex", width: "68%" }} 
-          className="learn-more"
-        >
+        <button type="submit" style={{ display: "flex", width: "68%" }} className="learn-more">
           <span className="circle" aria-hidden="true">
             <span className="icon arrow"></span>
           </span>
-          <span style={{textTransform: "none"}} className="button-text">
+          <span style={{ textTransform: "none" }} className="button-text">
             Submit RTO for Verification
           </span>
         </button>
-        <TextField 
-          style={{ width: "29%" }} 
-          type="number" 
-          label="Total Return" 
-          variant="outlined" 
+
+        <TextField
+          style={{ width: "29%" }}
+          type="number"
+          label="Total Return"
+          variant="outlined"
           value={totalReturn}
-          InputProps={{ readOnly: true, }}
+          InputProps={{ readOnly: true }}
         />
       </Box>
 
-      {/* // Snackbar */}
+      {/* Snackbar */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
@@ -358,7 +347,6 @@ const RTOForm = () => {
           RTO submitted successfully!
         </Alert>
       </Snackbar>
-
     </MainContainer>
   );
 };
