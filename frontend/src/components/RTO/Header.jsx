@@ -25,7 +25,7 @@ const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 function Header() {
   const navigate = useNavigate();
   const location = useLocation(); // <-- Get current path
-  const { submittedRTOs } = useContext(RTOContext);
+  // const { submittedRTOs } = useContext(RTOContext);
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
@@ -36,7 +36,7 @@ function Header() {
 
   // Determine button text & navigation based on current page
   const isSubmittedPage = location.pathname === "/submitted-rto";
-  const buttonText = isSubmittedPage ? "Back to Submission" : `Check Submitted RTO (${submittedRTOs.length})`;
+  const buttonText = isSubmittedPage ? "Back to Submission" : "Check Submitted RTO";
   const buttonClick = () => {
     if (isSubmittedPage) navigate("/");
     else navigate("/submitted-rto");

@@ -55,12 +55,14 @@ const RTOForm = () => {
       productTitle: "",
       awbId: "",
       orderId: "",
+      orderDate: "",
       courier: "",
       returnQty: "",
       itemCondition: "",
       claimRaised: "",
-      ticketId: ""
-    }
+      ticketId: "",
+      comments: "",
+    },
   ]);
 
   const [pickupPartner, setPickupPartner] = useState("");
@@ -91,14 +93,15 @@ const RTOForm = () => {
   // ✅ Handle field changes
   const handleChange = (index, key, value) => {
     setFields((prevFields) => {
-      if (!prevFields[index]) return prevFields;
       const updatedFields = [...prevFields];
+      if (!updatedFields[index]) return prevFields;
+
       updatedFields[index] = { ...updatedFields[index], [key]: value };
       return updatedFields;
     });
 
     if (key === "skuCode") {
-      const timer = setTimeout(() => fetchSkuData(value, index), 400);
+      const timer = setTimeout(() => fetchSkuData(value, index), 500);
       return () => clearTimeout(timer);
     }
   };
@@ -127,30 +130,40 @@ const RTOForm = () => {
   };
 
   // ✅ Submit form
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    submitRTO({
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    await axios.post("/api/rto", {
       pickupPartner,
+      returnDate: new Date().toISOString().split("T")[0], // or bind from return date input
       fields,
-      date: new Date().toISOString()
+      }, {
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
 
     setOpenSnackbar(true);
-
-    // Reset all fields
+    // Reset form
     setPickupPartner("");
-    setFields([{
-      skuCode: "",
-      productTitle: "",
-      awbId: "",
-      orderId: "",
-      courier: "",
-      returnQty: "",
-      itemCondition: "",
-      claimRaised: "",
-      ticketId: ""
-    }]);
-  };
+    setFields([{ 
+      returnDate: "",
+      skuCode: "", 
+      productTitle: "", 
+      awbId: "", 
+      orderId: "", 
+      orderDate: "", 
+      courier: "", 
+      itemCondition: "", 
+      claimRaised: "", 
+      ticketId: "",
+      comments: "", 
+      returnQty: "" }]);
+  } catch (err) {
+    console.error("Error submitting RTO:", err);
+  }
+};
 
   // ✅ Auto-total return quantity
   const totalReturn = fields.reduce((acc, field) => {
@@ -242,6 +255,8 @@ const RTOForm = () => {
                 label="Order Date"
                 variant="outlined"
                 required
+                value={field.orderDate} // <-- bind to state
+                onChange={(e) => handleChange(index, "orderDate", e.target.value)}
                 InputLabelProps={{ shrink: true }}
               />
             </FieldContainer>
@@ -295,6 +310,8 @@ const RTOForm = () => {
               type="text"
               label="Comments"
               variant="outlined"
+              value={field.comments} // <-- bind to state
+              onChange={(e) => handleChange(index, "comments", e.target.value)}
               required
             />
 
