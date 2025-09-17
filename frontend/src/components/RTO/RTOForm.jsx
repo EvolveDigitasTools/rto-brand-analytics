@@ -252,7 +252,7 @@ const RTOForm = () => {
               <TextField
                 style={{ width: "35%" }}
                 type="date"
-                label="Order Date"
+                label="Dispatched Date"
                 variant="outlined"
                 required
                 value={field.orderDate} // <-- bind to state
