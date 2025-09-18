@@ -107,6 +107,7 @@ export const getPoCodes = async (req, res) => {
 //   }
 // };
 
+
 // ✅ Get SKU codes - Phase - 3 (Testing with SKU and Combo SKUs)
 export const getSkuByCode = async (req, res) => {
   try {
@@ -132,7 +133,7 @@ export const getSkuByCode = async (req, res) => {
 
       return res.json({
         success: true,
-        type: "normal", // ✅ specify it is normal SKU
+        type: "normal",
         data: {
           sku,
           details: skuDetailsRows.length > 0 ? skuDetailsRows[0] : null,
@@ -142,17 +143,27 @@ export const getSkuByCode = async (req, res) => {
 
     // ✅ Step 2: If not found, try combo_sku table
     const [comboRows] = await db.query(
-      "SELECT * FROM combo_sku WHERE LOWER(combo_name) = LOWER(?)",
-      [skuCode]
+      "SELECT * FROM combo_sku WHERE combo_name LIKE ?",
+      [`%${skuCode}%`]
     );
 
     console.log("Combo Search Tried For:", skuCode, "Result Count:", comboRows.length);
 
     if (comboRows.length > 0) {
+      const combo = comboRows[0];
+      
       return res.json({
         success: true,
         type: "combo",
-        data: comboRows[0],
+        data: {
+          sku: {
+            skuCode: combo.combo_name,
+            name: combo.combo_title,
+            data: comboRows[0],
+            ...combo, // include other combo fields if needed
+          },
+          details: null, // no separate details table for combo
+        },
       });
     }
 
@@ -163,4 +174,5 @@ export const getSkuByCode = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
