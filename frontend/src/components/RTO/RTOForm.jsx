@@ -108,26 +108,43 @@ const RTOForm = () => {
 
   // ✅ Fetch SKU data and update product title
   const fetchSkuData = async (code, index) => {
-    try {
-      const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
-      setFields((prevFields) => {
-        if (!prevFields[index]) return prevFields;
-        const updatedFields = [...prevFields];
-        updatedFields[index] = {
-          ...updatedFields[index],
-          productTitle: res.data.success ? res.data.data.sku?.name || "" : ""
-        };
-        return updatedFields;
-      });
-    } catch (err) {
-      setFields((prevFields) => {
-        if (!prevFields[index]) return prevFields;
-        const updatedFields = [...prevFields];
-        updatedFields[index] = { ...updatedFields[index], productTitle: "" };
-        return updatedFields;
-      });
-    }
-  };
+  try {
+    const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
+
+    setFields((prevFields) => {
+      if (!prevFields[index]) return prevFields;
+
+      const updatedFields = [...prevFields];
+
+      updatedFields[index] = {
+        ...updatedFields[index],
+        // ✅ Only set productTitle if normal SKU
+        productTitle:
+          res.data.success && res.data.type === "normal"
+            ? res.data.data.sku?.name || ""
+            : "",
+        // ✅ Set flag for check mark (true for both normal + combo)
+        isValidSku: res.data.success ? true : false,
+      };
+
+      return updatedFields;
+    });
+  } catch (err) {
+    setFields((prevFields) => {
+      if (!prevFields[index]) return prevFields;
+
+      const updatedFields = [...prevFields];
+      updatedFields[index] = {
+        ...updatedFields[index],
+        productTitle: "",
+        isValidSku: false, // ✅ clear flag
+      };
+
+      return updatedFields;
+    });
+  }
+};
+
 
   // ✅ Submit form
   const handleSubmit = async (e) => {
@@ -207,30 +224,33 @@ const RTOForm = () => {
           <FieldContainer style={{ display: "grid" }} key={index}>
             {/* SKU Code + Product Title */}
             <FieldContainer>
-              <TextField
-                style={{ width: "30%" }}
-                label="SKU Code"
-                variant="outlined"
-                required
-                value={field.skuCode}
-                onChange={(e) => handleChange(index, "skuCode", e.target.value)}
-                InputProps={{
-                  endAdornment: field.productTitle && (
-                    <InputAdornment position="end">
-                      <CheckCircleIcon color="success" />
-                    </InputAdornment>
-                  )
-                }}
-              />
+  <TextField
+    style={{ width: "30%" }}
+    label="SKU Code"
+    variant="outlined"
+    required
+    value={field.skuCode}
+    onChange={(e) => handleChange(index, "skuCode", e.target.value)}
+    InputProps={{
+      endAdornment:
+        field.isValidSku && ( // ✅ check this flag, not productTitle
+          <InputAdornment position="end">
+            <CheckCircleIcon color="success" />
+          </InputAdornment>
+        ),
+    }}
+  />
 
-              <TextField
-                style={{ width: "70%" }}
-                label="Product Title"
-                variant="outlined"
-                value={field.productTitle}
-                InputProps={{ readOnly: true }}
-              />
-            </FieldContainer>
+  <TextField
+    style={{ width: "70%" }}
+    label="Product Title"
+    variant="outlined"
+    value={field.productTitle}
+    InputProps={{ readOnly: true }}
+  />
+</FieldContainer>
+
+
 
             {/* AWB ID + Order ID + Date */}
             <FieldContainer>
