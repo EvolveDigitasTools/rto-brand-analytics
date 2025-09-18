@@ -66,7 +66,48 @@ export const getPoCodes = async (req, res) => {
 //   }
 // };
 
-// ✅ Get SKU codes - Phase - 2 (Testing with SKU, SAP and Title)
+// ✅ Get SKU codes - Phase - 2 Currently working
+// export const getSkuByCode = async (req, res) => {
+//   try {
+//     const { skuCode } = req.query;
+//     if (!skuCode) {
+//       return res.status(400).json({ success: false, message: "skuCode is required" });
+//     }
+
+//     // ✅ Destructure to get rows from MySQL
+//     const [skuRows] = await db.query(
+//       "SELECT * FROM sku WHERE skuCode = ?",
+//       [skuCode]
+//     );
+
+//     if (skuRows.length === 0) {
+//       return res.status(404).json({ success: false, message: "SKU not found" });
+//     }
+
+//     const sku = skuRows[0];
+
+//     const [skuDetailsRows] = await db.query(
+//       "SELECT * FROM sku_details WHERE skuId = ?",
+//       [sku.id]
+//     );
+//     console.log("Fetched SKU Details:", skuDetailsRows[0]);
+
+//     const details = skuDetailsRows.length > 0 ? skuDetailsRows[0] : null;
+
+//     return res.json({
+//       success: true,
+//       data: {
+//         sku,
+//         details,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching SKU:", error);
+//     return res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
+// ✅ Get SKU codes - Phase - 3 (Testing with SKU and Combo SKUs)
 export const getSkuByCode = async (req, res) => {
   try {
     const { skuCode } = req.query;
@@ -74,35 +115,52 @@ export const getSkuByCode = async (req, res) => {
       return res.status(400).json({ success: false, message: "skuCode is required" });
     }
 
-    // ✅ Destructure to get rows from MySQL
+    // ✅ Step 1: Try to find in normal SKU table
     const [skuRows] = await db.query(
       "SELECT * FROM sku WHERE skuCode = ?",
       [skuCode]
     );
 
-    if (skuRows.length === 0) {
-      return res.status(404).json({ success: false, message: "SKU not found" });
+    if (skuRows.length > 0) {
+      const sku = skuRows[0];
+
+      // Fetch details for normal SKU
+      const [skuDetailsRows] = await db.query(
+        "SELECT * FROM sku_details WHERE skuId = ?",
+        [sku.id]
+      );
+
+      return res.json({
+        success: true,
+        type: "normal", // ✅ specify it is normal SKU
+        data: {
+          sku,
+          details: skuDetailsRows.length > 0 ? skuDetailsRows[0] : null,
+        },
+      });
     }
 
-    const sku = skuRows[0];
-
-    const [skuDetailsRows] = await db.query(
-      "SELECT * FROM sku_details WHERE skuId = ?",
-      [sku.id]
+    // ✅ Step 2: If not found, try combo_sku table
+    const [comboRows] = await db.query(
+      "SELECT * FROM combo_sku WHERE LOWER(combo_name) = LOWER(?)",
+      [skuCode]
     );
-    console.log("Fetched SKU Details:", skuDetailsRows[0]);
 
-    const details = skuDetailsRows.length > 0 ? skuDetailsRows[0] : null;
+    console.log("Combo Search Tried For:", skuCode, "Result Count:", comboRows.length);
 
-    return res.json({
-      success: true,
-      data: {
-        sku,
-        details,
-      },
-    });
+    if (comboRows.length > 0) {
+      return res.json({
+        success: true,
+        type: "combo",
+        data: comboRows[0],
+      });
+    }
+
+    return res.status(404).json({ success: false, message: "SKU or Combo SKU not found" });
+
   } catch (error) {
     console.error("Error fetching SKU:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
