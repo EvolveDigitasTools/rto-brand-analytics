@@ -116,15 +116,13 @@ const RTOForm = () => {
 
       const updatedFields = [...prevFields];
 
+      // ✅ For both normal and combo SKUs, use data.sku.name
+      const title = res.data.success ? res.data.data.sku?.name || "" : "";
+
       updatedFields[index] = {
         ...updatedFields[index],
-        // ✅ Only set productTitle if normal SKU
-        productTitle:
-          res.data.success && res.data.type === "normal"
-            ? res.data.data.sku?.name || ""
-            : "",
-        // ✅ Set flag for check mark (true for both normal + combo)
-        isValidSku: res.data.success ? true : false,
+        productTitle: title,
+        isValidSku: res.data.success,
       };
 
       return updatedFields;
@@ -137,7 +135,7 @@ const RTOForm = () => {
       updatedFields[index] = {
         ...updatedFields[index],
         productTitle: "",
-        isValidSku: false, // ✅ clear flag
+        isValidSku: false,
       };
 
       return updatedFields;
@@ -224,31 +222,32 @@ const RTOForm = () => {
           <FieldContainer style={{ display: "grid" }} key={index}>
             {/* SKU Code + Product Title */}
             <FieldContainer>
-  <TextField
-    style={{ width: "30%" }}
-    label="SKU Code"
-    variant="outlined"
-    required
-    value={field.skuCode}
-    onChange={(e) => handleChange(index, "skuCode", e.target.value)}
-    InputProps={{
-      endAdornment:
-        field.isValidSku && ( // ✅ check this flag, not productTitle
-          <InputAdornment position="end">
-            <CheckCircleIcon color="success" />
-          </InputAdornment>
-        ),
-    }}
-  />
+              <TextField
+                style={{ width: "30%" }}
+                label="SKU Code"
+                variant="outlined"
+                required
+                value={field.skuCode}
+                onChange={(e) => handleChange(index, "skuCode", e.target.value)}
+                InputProps={{
+                  endAdornment:
+                    field.isValidSku && (
+                      <InputAdornment position="end">
+                        <CheckCircleIcon color="success" />
+                      </InputAdornment>
+                    ),
+                }}
+              />
 
-  <TextField
-    style={{ width: "70%" }}
-    label="Product Title"
-    variant="outlined"
-    value={field.productTitle}
-    InputProps={{ readOnly: true }}
-  />
-</FieldContainer>
+              <TextField
+                style={{ width: "70%" }}
+                label="Product Title"
+                variant="outlined"
+                value={field.productTitle}
+                InputProps={{ readOnly: true }}
+              />
+            </FieldContainer>
+
 
 
 
