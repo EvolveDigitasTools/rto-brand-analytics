@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import apiRoutes from "./routes/apiRoutes.js";
+import authRoutes from "./routes/authRoutes.js"
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api", apiRoutes);
+app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.send("✅ Backend is running!");
