@@ -4,9 +4,27 @@ import axios from "axios";
 export const RTOContext = createContext();
 
 export const RTOProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize isAuthenticated from localStorage
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
   const [submittedRTOs, setSubmittedRTOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Update localStorage whenever isAuthenticated changes
+  useEffect(() => {
+    localStorage.setItem('isAuthenticated', isAuthenticated);
+  }, [isAuthenticated]);
+
+  const login = () => {
+    setIsAuthenticated(true);
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+  };
 
   const fetchSubmittedRTOs = async () => {
     try {
@@ -67,7 +85,7 @@ export const RTOProvider = ({ children }) => {
   };
 
   return (
-    <RTOContext.Provider value={{ submittedRTOs, submitRTO, loading, error }}>
+    <RTOContext.Provider value={{ isAuthenticated, login, logout, submittedRTOs, submitRTO, loading, error }}>
       {children}
     </RTOContext.Provider>
   );

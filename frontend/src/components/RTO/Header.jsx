@@ -23,11 +23,17 @@ const pages = ['', '', ''];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 function Header() {
+  const { logout } = useContext(RTOContext);
   const navigate = useNavigate();
   const location = useLocation(); // <-- Get current path
   // const { submittedRTOs } = useContext(RTOContext);
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
@@ -38,7 +44,7 @@ function Header() {
   const isSubmittedPage = location.pathname === "/submitted-rto";
   const buttonText = isSubmittedPage ? "Back to Submission" : "Check Submitted RTO";
   const buttonClick = () => {
-    if (isSubmittedPage) navigate("/");
+    if (isSubmittedPage) navigate("/rto-form");
     else navigate("/submitted-rto");
   };
 
@@ -157,7 +163,10 @@ function Header() {
               onClose={handleCloseUserMenu}
             >
               {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                <MenuItem 
+                  key={setting} 
+                  onClick={setting === 'Logout' ? handleLogout : handleCloseUserMenu}
+                  >
                   <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
                 </MenuItem>
               ))}
