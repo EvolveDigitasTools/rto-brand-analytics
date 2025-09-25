@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { RTOContext } from "../../Context/RTOContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -19,19 +19,26 @@ import FlakyIcon from '@mui/icons-material/Flaky';
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
-const pages = ['', '', ''];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const pages = ['Home', 'RTO Form', 'Submitted RTOs'];
 
 function Header() {
-  const { logout } = useContext(RTOContext);
+  const { user, logout } = useContext(RTOContext);
   const navigate = useNavigate();
   const location = useLocation(); // <-- Get current path
   // const { submittedRTOs } = useContext(RTOContext);
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
+  const settings = [
+    user?.name ||'Profile', 
+    'Account', 
+    'Dashboard', 
+    'Logout'
+  ];
+
   const handleLogout = () => {
     logout();
+    handleCloseUserMenu();
     navigate('/');
   };
 
@@ -56,8 +63,8 @@ function Header() {
           <Typography
             variant="h6"
             noWrap
-            component="a"
-            href="#"
+            component={Link}
+            to="/"
             sx={{
               width: "20%",
               mr: 2,
@@ -69,7 +76,11 @@ function Header() {
               textDecoration: 'none',
             }}
           >
-            <img src="images/plugin-logo.png" alt="plugin-logo" style={{ width: "100px", height: "50px" }} />
+            <img 
+              src="images/plugin-logo.png" 
+              alt="plugin-logo" 
+              style={{ width: "100px", height: "50px" }} 
+            />
           </Typography>
 
           {/* Centered Title */}
@@ -127,7 +138,17 @@ function Header() {
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
               {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
+                <MenuItem 
+                  key={page} 
+                  onClick={() => {
+                    handleCloseNavMenu();
+
+                    // Navigate based on page name
+                    if (page === "Home") navigate("/");
+                    else if (page === "RTO Form") navigate("/rto-form");
+                    else if (page === "Submitted RTOs") navigate("/submitted-rto");
+                  }}
+                >
                   <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
                 </MenuItem>
               ))}

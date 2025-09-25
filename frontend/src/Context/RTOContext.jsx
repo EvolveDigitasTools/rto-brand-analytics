@@ -5,25 +5,40 @@ export const RTOContext = createContext();
 
 export const RTOProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Initialize isAuthenticated from localStorage
     return localStorage.getItem('isAuthenticated') === 'true';
   });
+
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (err) {
+      console.warn("Failed to parse user from localStorage:", err);
+      localStorage.removeItem("user"); // clean invalid value
+      return null;
+    }
+  });
+
   const [submittedRTOs, setSubmittedRTOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Update localStorage whenever isAuthenticated changes
   useEffect(() => {
     localStorage.setItem('isAuthenticated', isAuthenticated);
   }, [isAuthenticated]);
 
-  const login = () => {
+  const login = (userData) => {
     setIsAuthenticated(true);
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
+    setUser(null);
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token"); 
   };
 
   const fetchSubmittedRTOs = async () => {
@@ -31,23 +46,23 @@ export const RTOProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const res = await axios.get("http://localhost:4000/api/rto");
-      console.log("Fetched RTOs in context (raw):", res.data.data);
+      // console.log("Fetched RTOs in context (raw):", res.data.data);
       if (res.data.success && Array.isArray(res.data.data)) {
         const validRows = res.data.data.filter(
           (row) => row && typeof row === "object" && row.hasOwnProperty("id")
         );
-        console.log("Filtered valid rows:", validRows);
+        // console.log("Filtered valid rows:", validRows);
         setSubmittedRTOs(validRows);
       } else {
-        console.log("No valid data received:", res.data);
+        // console.log("No valid data received:", res.data);
         setSubmittedRTOs([]);
         setError("No valid RTO data received");
       }
     } catch (err) {
-      console.error("Error fetching submitted RTOs:", {
-        message: err.message,
-        response: err.response?.data,
-      });
+      // console.error("Error fetching submitted RTOs:", {
+      //   message: err.message,
+      //   response: err.response?.data,
+      // });
       setError(err.response?.data?.message || "Failed to fetch RTOs");
       setSubmittedRTOs([]);
     } finally {
@@ -85,7 +100,18 @@ export const RTOProvider = ({ children }) => {
   };
 
   return (
-    <RTOContext.Provider value={{ isAuthenticated, login, logout, submittedRTOs, submitRTO, loading, error }}>
+    <RTOContext.Provider 
+      value={{ 
+          isAuthenticated, 
+          user,
+          login, 
+          logout, 
+          submittedRTOs, 
+          submitRTO, 
+          loading, 
+          error 
+        }}
+      >
       {children}
     </RTOContext.Provider>
   );

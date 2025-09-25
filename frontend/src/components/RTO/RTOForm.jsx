@@ -109,7 +109,7 @@ const RTOForm = () => {
   // ✅ Fetch SKU data and update product title
   const fetchSkuData = async (code, index) => {
   try {
-    const res = await axios.get(`/api?type=skuCode&skuCode=${code}`);
+    const res = await axios.get(`http://localhost:4000/api?type=skuCode&skuCode=${code}`);
 
     setFields((prevFields) => {
       if (!prevFields[index]) return prevFields;
@@ -143,13 +143,12 @@ const RTOForm = () => {
   }
 };
 
-
   // ✅ Submit form
   const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
-    await axios.post("/api/rto", {
+    await axios.post("http://localhost:4000/api/rto", {
       pickupPartner,
       returnDate: new Date().toISOString().split("T")[0], // or bind from return date input
       fields,
