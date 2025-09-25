@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Add useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useContext } from 'react';
 import { RTOContext } from '../../Context/RTOContext';
 import Box from '@mui/material/Box';
@@ -81,20 +81,23 @@ export default function SignIn(props) {
     setOpen(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (emailError || passwordError) {
-      event.preventDefault();
       return;
     }
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
-    login();
-    const from = location.state?.from?.pathname || '/rto-form';
-    navigate(from, { replace: true });
+    const email = data.get('email');
+    const password = data.get('password');
+    
+    const result = await login(email, password);
+    if (result.success) {
+      const from = location.state?.from?.pathname || '/rto-form';
+      navigate(from, { replace: true });
+    } else {
+      setEmailError(true);
+      setEmailErrorMessage(result.message || 'Login failed');
+    }
   };
 
   const validateInputs = () => {
@@ -128,9 +131,7 @@ export default function SignIn(props) {
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
-
         <Card variant="outlined">
-          
           <Typography
             component="h1"
             variant="h4"

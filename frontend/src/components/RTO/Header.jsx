@@ -30,7 +30,7 @@ function Header() {
   const [anchorElUser, setAnchorElUser] = useState(null);
 
   const settings = [
-    user?.name ||'Profile', 
+    user?.email ||'Profile', 
     'Account', 
     'Dashboard', 
     'Logout'
@@ -54,6 +54,10 @@ function Header() {
     if (isSubmittedPage) navigate("/rto-form");
     else navigate("/submitted-rto");
   };
+
+  // Placeholder for fetching user name from MySQL database based on user.email
+  // In a real implementation, you would query the database here using user.email
+  const userName = user ? user.name || 'User' : 'Guest'; // Fallback to 'User' if name is not available
 
   return (
     <AppBar position="static" style={{ background: "#424141" }}>
@@ -84,23 +88,41 @@ function Header() {
           </Typography>
 
           {/* Centered Title */}
-          <Typography
-            variant="h5"
-            noWrap
-            component="div"
+          <Box
             sx={{
               flexGrow: 1,
               textAlign: 'center',
-              fontFamily: 'Open Sans',
-              fontWeight: 700,
-              color: 'inherit',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            RTO Submission
-          </Typography>
+            {/* <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontFamily: 'Open Sans',
+                fontWeight: 400,
+                color: 'inherit',
+              }}
+            >
+              Hello {userName}
+            </Typography> */}
+            <Typography
+              variant="h5"
+              noWrap
+              component="div"
+              sx={{
+                fontFamily: 'Open Sans',
+                fontWeight: 700,
+                color: 'inherit',
+              }}
+            >
+              RTO Submission
+            </Typography>
+          </Box>
 
           {/* Mobile Check Button */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
@@ -113,6 +135,21 @@ function Header() {
             >
               {buttonText}
             </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Tooltip title="Profile">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <AccountCircleIcon style={{ color: "white", width: 40, height: 35 }} />
+                </IconButton>
+              </Tooltip>
+              {user && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "white", textAlign: "center", mt: 0.5 }}
+                >
+                  {userName}
+                </Typography>
+              )}
+            </Box>
           </Box>
 
           {/* Navigation Menu for Mobile */}
@@ -158,7 +195,7 @@ function Header() {
           {/* Desktop Buttons */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
             <Button
-              style={{background: "#ffffff", color: "#424141"}}
+              style={{ background: "#ffffff", color: "#424141" }}
               variant="contained"
               color="primary"
               startIcon={<FlakyIcon />}
@@ -168,11 +205,22 @@ function Header() {
               {buttonText}
             </Button>
 
-            <Tooltip title="Profile">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <AccountCircleIcon style={{ color: "white", width: 40, height: 35 }} />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Tooltip title="Profile">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <AccountCircleIcon style={{ color: "white", width: 40, height: 35 }} />
+                </IconButton>
+              </Tooltip>
+              {user && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "white", textAlign: "center", mt: 0.5 }}
+                >
+                  {userName}
+                </Typography>
+              )}
+            </Box>
+
             <Menu
               sx={{ mt: '45px' }}
               id="menu-appbar-user"
@@ -183,14 +231,15 @@ function Header() {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem 
-                  key={setting} 
-                  onClick={setting === 'Logout' ? handleLogout : handleCloseUserMenu}
-                  >
-                  <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-                </MenuItem>
-              ))}
+              <MenuItem onClick={handleCloseUserMenu}>
+                <Typography sx={{ textAlign: 'center' }}>Account</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleCloseUserMenu}>
+                <Typography sx={{ textAlign: 'center' }}>Dashboard</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Typography sx={{ textAlign: 'center' }}>Logout</Typography>
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>
