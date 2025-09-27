@@ -1,12 +1,15 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { Snackbar, Alert, Box, MenuItem, TextField, InputAdornment, IconButton } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import styled from "@emotion/styled";
 import { RTOContext } from "../../Context/RTOContext";
+
+const API_URL = process.env.REACT_APP_API_URL;
 
 const MainContainer = styled(Box)`
   display: grid;
@@ -109,7 +112,7 @@ const RTOForm = () => {
   // ✅ Fetch SKU data and update product title
   const fetchSkuData = async (code, index) => {
   try {
-    const res = await axios.get(`http://localhost:4000/api?type=skuCode&skuCode=${code}`);
+    const res = await axios.get(`${API_URL}/api?type=skuCode&skuCode=${code}`);
 
     setFields((prevFields) => {
       if (!prevFields[index]) return prevFields;
@@ -147,16 +150,29 @@ const RTOForm = () => {
   const handleSubmit = async (e) => {
   e.preventDefault();
 
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("No token found — user may not be logged in");
+    return;
+  }
+  // console.log("🔑 API URL:", API_URL);
+  // console.log("🔑 Token:", token ? token.slice(0, 30) + "..." : "MISSING");
+
+  // ✅ Decode token to get email
+
   try {
-    await axios.post("http://localhost:4000/api/rto", {
+    const res = await axios.post(`${API_URL}/api/rto`, {
       pickupPartner,
       returnDate: new Date().toISOString().split("T")[0], // or bind from return date input
       fields,
       }, {
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       }
     });
+
+    console.log("✅ Response:", res.data);
 
     setOpenSnackbar(true);
     // Reset form
@@ -176,6 +192,10 @@ const RTOForm = () => {
       returnQty: "" }]);
   } catch (err) {
     console.error("Error submitting RTO:", err);
+    console.error("Response:", err.response?.data);
+    console.error("Status:", err.response?.status);
+    console.error("Request URL:", err.config?.url);
+    console.error("Request Headers:", err.config?.headers);
   }
 };
 

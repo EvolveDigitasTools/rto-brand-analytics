@@ -23,15 +23,15 @@ const SubmittedRTOsPage = () => {
   // Log rows for debugging
   console.log("SubmittedRTOs in DataGrid:", submittedRTOs);
 
-  const safeDate = (dateValue) => {
-    if (!dateValue || dateValue === "NULL" || dateValue === "") {
-      console.log("Invalid dateValue:", dateValue);
-      return "-";
-    }
-    // Log valid date for debugging
-    console.log("Valid dateValue:", dateValue);
-    return dateValue;
-  };
+  // const safeDate = (dateValue) => {
+  //   if (!dateValue || dateValue === "NULL" || dateValue === "") {
+  //     console.log("Invalid dateValue:", dateValue);
+  //     return "-";
+  //   }
+  //   // Log valid date for debugging
+  //   console.log("Valid dateValue:", dateValue);
+  //   return dateValue;
+  // };
 
   const columns = [
     { field: "id", headerName: "ID", width: 80 },
@@ -61,8 +61,9 @@ const SubmittedRTOsPage = () => {
       field: "created_at",
       headerName: "Created At",
       width: 180,
-      renderCell: (params) => formatDate(params.value),
+      renderCell: (params) => formatDateTime(params.value),
     },
+    { field: "created_by", headerName: "Created By", width: 150 },
   ];
 
   console.log("SubmittedRTOs in DataGrid:", submittedRTOs);
