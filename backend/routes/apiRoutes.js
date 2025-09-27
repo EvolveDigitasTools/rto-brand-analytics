@@ -1,5 +1,6 @@
 import express from "express";
 import dbPromise from "../db.js";
+import jwt from "jsonwebtoken";
 import { getVendors, getPoCodes, getSkuByCode } from "../controllers/apiController.js";
 
 const router = express.Router();
@@ -24,7 +25,6 @@ router.get("/", async (req, res) => {
 router.get("/rto", async (req, res) => {
   let db;
   try {
-    // Initialize DB connection
     db = await dbPromise
     const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY created_at DESC");
     res.json({ success: true, data: rows });
@@ -38,10 +38,22 @@ router.get("/rto", async (req, res) => {
 router.post("/rto", async (req, res) => {
   let db;
   try {
-    // Initialize DB connection
     db = await dbPromise
 
     const { pickupPartner, returnDate, fields } = req.body;
+
+    const token = req.headers.authorization?.split("Bearer ")[1];
+    if (!token) {
+      return res.status(401).json({ success: false, message: "No token provided" });
+    }
+
+    let created_by;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      created_by = decoded.email;
+    } catch (err) {
+      return res.status(403).json({ success: false, message: "Invalid token" });
+    }
 
     // Log request body for debugging
     console.log("Request Body:", req.body);
@@ -78,7 +90,8 @@ router.post("/rto", async (req, res) => {
         field.ticketId || null,
         field.returnQty || 1,
         field.comments || null,
-        new Date(), // Set created_at to current timestamp
+        new Date(),
+        created_by
       ];
     });
 
@@ -87,7 +100,23 @@ router.post("/rto", async (req, res) => {
 
     const sql = `
       INSERT INTO rto_submissions 
-      (pickup_partner, return_date, sku_code, product_title, awb_id, order_id, order_date, courier, item_condition, claim_raised, ticket_id, return_qty, comments, created_at)
+      (
+        pickup_partner, 
+        return_date, 
+        sku_code, 
+        product_title, 
+        awb_id, 
+        order_id, 
+        order_date, 
+        courier, 
+        item_condition, 
+        claim_raised, 
+        ticket_id, 
+        return_qty, 
+        comments, 
+        created_at, 
+        created_by
+      )
       VALUES ?
     `;
 
@@ -99,7 +128,5 @@ router.post("/rto", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
-
 
 export default router;

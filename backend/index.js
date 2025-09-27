@@ -12,8 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-  // origin: "http://localhost:3000", //Deployment
-  origin: "https://rto.globalplugin.com", //Production
+  origin: "http://localhost:3000", //Deployment
+  // origin: "https://rto.globalplugin.com", //Production
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -36,9 +36,6 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 4000;
 
 
-//Vercel does not need it.
-// app.listen(PORT, () => {
-//     console.log(`Backend running on port http://localhost:${PORT}`);
-// });
-
-export default app;
+app.listen(PORT, () => {
+    console.log(`Backend running on port http://localhost:${PORT}`);
+});
