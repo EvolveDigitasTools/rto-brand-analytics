@@ -76,7 +76,7 @@ const SubmittedRTOsPage = () => {
   });
 
   return (
-    <Box sx={{ height: 600, width: "100%", padding: 3 }}>
+    <Box sx={{ height: 600, padding: 3 }}>
       {error && <Box sx={{ color: "red", mb: 2 }}>Error: {error}</Box>}
       <DataGrid
         rows={submittedRTOs}
