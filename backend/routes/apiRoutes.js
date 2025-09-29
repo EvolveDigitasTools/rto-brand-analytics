@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get submitted RTO data - Phase 1 workuing
+// Get submitted RTO data - Phase 1 working
 router.get("/rto", async (req, res) => {
   let db;
   try {
@@ -128,5 +128,107 @@ router.post("/rto", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+// Delete RTO data - Phase 1 testing
+router.delete("/rto/:id", async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const { id } = req.params;
+    await db.query("DELETE FROM rto_submissions WHERE id = ?", [id]);
+    res.json({ success: true, message: "RTO deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Update RTO data
+router.put("/rto/:id", async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const { id } = req.params;
+
+    const {
+      pickup_partner = null,
+      return_date = null,
+      sku_code = null,
+      product_title = null,
+      awb_id = null,
+      order_id = null,
+      order_date = null,
+      courier = null,
+      item_condition = null,
+      claim_raised = null,
+      ticket_id = null,
+      comments = null,
+      return_qty = 1,
+    } = req.body;
+
+    console.log("PUT /rto/:id body:", req.body);
+
+    // Convert date strings to YYYY-MM-DD format
+    // ✅ Validate return_date
+    let parsedReturnDate = null;
+    if (return_date) {
+      const d = new Date(return_date);
+      if (isNaN(d.getTime())) {
+        return res.status(400).json({ success: false, message: "Invalid return_date format" });
+      }
+      parsedReturnDate = d.toISOString().split("T")[0];
+    }
+
+    // ✅ Validate order_date
+    let parsedOrderDate = null;
+    if (order_date) {
+      const d = new Date(order_date);
+      if (isNaN(d.getTime())) {
+        return res.status(400).json({ success: false, message: "Invalid order_date format" });
+      }
+      parsedOrderDate = d.toISOString().split("T")[0];
+    }
+
+    const sql = `
+      UPDATE rto_submissions SET
+        pickup_partner=?,
+        return_date=?,
+        sku_code=?,
+        product_title=?,
+        awb_id=?,
+        order_id=?,
+        order_date=?,
+        courier=?,
+        item_condition=?,
+        claim_raised=?,
+        ticket_id=?,
+        comments=?,
+        return_qty=?
+      WHERE id=?
+    `;
+
+    await db.query(sql, [
+      pickup_partner,
+      parsedReturnDate,
+      sku_code,
+      product_title,
+      awb_id,
+      order_id,
+      parsedOrderDate,
+      courier,
+      item_condition,
+      claim_raised,
+      ticket_id,
+      comments,
+      return_qty,
+      id,
+    ]);
+
+    res.json({ success: true, message: "RTO updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 
 export default router;
