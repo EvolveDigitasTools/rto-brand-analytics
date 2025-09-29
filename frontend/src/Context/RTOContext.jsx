@@ -8,14 +8,14 @@ export const RTOContext = createContext();
 export const RTOProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const auth = localStorage.getItem('isAuthenticated');
-    console.log("Initial isAuthenticated from localStorage:", auth); // Debug
+    // console.log("Initial isAuthenticated from localStorage:", auth); // Debug
     return auth === 'true';
   });
 
   const [user, setUser] = useState(() => {
     try {
       const storedUser = localStorage.getItem("user");
-      console.log("Initial user from localStorage:", storedUser); 
+      // console.log("Initial user from localStorage:", storedUser); 
       if (!storedUser || storedUser === "undefined" || storedUser === "") {
         localStorage.removeItem("user");
         localStorage.removeItem("isAuthenticated"); // Clean up invalid data
@@ -23,7 +23,7 @@ export const RTOProvider = ({ children }) => {
       }
       return JSON.parse(storedUser);
     } catch (err) {
-      console.warn("Failed to parse user from localStorage:", err);
+      // console.warn("Failed to parse user from localStorage:", err);
       localStorage.removeItem("user"); // Clean invalid value
       localStorage.removeItem("isAuthenticated");
       return null;
@@ -35,7 +35,7 @@ export const RTOProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("Updating localStorage with isAuthenticated:", isAuthenticated); // Debug
+    // console.log("Updating localStorage with isAuthenticated:", isAuthenticated); // Debug
     localStorage.setItem('isAuthenticated', isAuthenticated);
     if (!isAuthenticated) {
       localStorage.removeItem("user");
@@ -52,7 +52,7 @@ export const RTOProvider = ({ children }) => {
         password,
       });
 
-      console.log("Login response:", response.data); // Debug
+      // console.log("Login response:", response.data); // Debug
 
       if (response.data.success) {
         const userData = {
@@ -75,7 +75,7 @@ export const RTOProvider = ({ children }) => {
         throw new Error(response.data.message || "Login failed");
       }
     } catch (err) {
-      console.error("Login error:", err);
+      // console.error("Login error:", err);
       setError(err.response?.data?.message || "Failed to login");
       setIsAuthenticated(false);
       setUser(null);
@@ -94,7 +94,7 @@ export const RTOProvider = ({ children }) => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
     localStorage.removeItem("token"); 
-    console.log("Logged out, cleared localStorage"); // Debug
+    // console.log("Logged out, cleared localStorage"); // Debug
   };
 
   const fetchSubmittedRTOs = async () => {
@@ -154,17 +154,17 @@ export const RTOProvider = ({ children }) => {
         return_date: rto.return_date ? new Date(rto.return_date).toISOString() : null,
         created_at: rto.created_at ? new Date(rto.created_at).toISOString() : new Date().toISOString(),
       };
-      console.log("Submitting RTO with data:", formattedRTO); // Debug
+      // console.log("Submitting RTO with data:", formattedRTO); // Debug
       await axios.post(`${API_URL}/api/rto`, formattedRTO, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchSubmittedRTOs();
       return { success: true };
     } catch (err) {
-      console.error("Error submitting RTO:", {
-        message: err.message,
-        response: err.response?.data,
-      });
+      // console.error("Error submitting RTO:", {
+      //   message: err.message,
+      //   response: err.response?.data,
+      // });
       setError(err.response?.data?.message || "Failed to submit RTO");
       if (err.response?.status === 401) {
         logout(); // Auto-logout on 401

@@ -8,7 +8,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import styled from "@emotion/styled";
 // import { RTOContext } from "../../Context/RTOContext";
 
-const API_URL = process.env.REACT_APP_API_URL;
+
 
 const MainContainer = styled(Box)`
   display: grid;
@@ -38,6 +38,7 @@ const IconButtonStyle = styled(IconButton)`
 `;
 
 const RTOForm = () => {
+  const API_URL = process.env.REACT_APP_API_URL;
   // const navigate = useNavigate();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   // const { submitRTO } = useContext(RTOContext);

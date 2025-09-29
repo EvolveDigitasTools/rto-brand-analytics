@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef, useMemo } from "react";
 import { Box, TextField, IconButton, Snackbar, Alert, MenuItem } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { RTOContext } from "../../Context/RTOContext";
@@ -20,7 +20,7 @@ const formatDate = (dateString) => {
   if (!dateString) return "-";
   const date = parseISO(dateString);
   if (!isValid(date)) return "-";
-  return format(date, "yyyy-MM-dd");
+  return format(date, "dd MMM yyyy");
 };
 
 const formatDateTime = (dateString) => {
@@ -31,22 +31,96 @@ const formatDateTime = (dateString) => {
 };
 
 const SubmittedRTOsPage = () => {
-  const { submittedRTOs, loading, error, fetchSubmittedRTOs } = useContext(RTOContext);
+  const { submittedRTOs, setSubmittedRTOs, loading, error, fetchSubmittedRTOs, isAuthenticated, setIsAuthenticated } = useContext(RTOContext);
   const [editRowId, setEditRowId] = useState(null);
   const [editData, setEditData] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [isPolling, setIsPolling] = useState(false);
+  const prevRTOsRef = useRef(submittedRTOs);
   const API_URL = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem("token");
-  let user = {};
-  try {
-    const storedUser = localStorage.getItem("user");
-    user = storedUser ? JSON.parse(storedUser) : {};
-  } catch (err) {
-    console.error("Failed to parse user from localStorage:", err);
-    user = {};
-  }
+
+  const user = useMemo(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : {};
+    } catch (err) {
+      console.error("Failed to parse user from localStorage:", err);
+      return {};
+    }
+  }, []);
+
   const userRole = user.role || localStorage.getItem("role") || "user";
-  console.log("User role:", userRole);
+  // console.log("User role:", userRole);
+
+// Silent polling every 10 seconds for all authenticated users
+  useEffect(() => {
+    if (!isAuthenticated || !token) {
+      // console.warn("Polling skipped: not authenticated or no token", { isAuthenticated, token });
+      return;
+    }
+
+    // console.log("Polling started for user:", user.email, "Role:", userRole, "API_URL:", API_URL);
+    const interval = setInterval(async () => {
+      setIsPolling(true);
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          const res = await axios.get(`${API_URL}/api/rto`, {
+            headers: { Authorization: `Bearer ${token}` },
+            timeout: 5000,
+          });
+          // console.log("Polling response:", res.data);
+          if (res.data.success && Array.isArray(res.data.data)) {
+            const newRows = res.data.data.filter(
+              (row) => row && typeof row === "object" && row.hasOwnProperty("id")
+            );
+            const newIds = newRows.map(row => row.id).sort();
+            const prevIds = prevRTOsRef.current.map(row => row.id).sort();
+            if (newRows.length !== prevRTOsRef.current.length || JSON.stringify(newIds) !== JSON.stringify(prevIds)) {
+              // console.log("Updating RTO data:", newRows.length, "rows");
+              setSubmittedRTOs(newRows);
+              prevRTOsRef.current = newRows;
+            } else {
+              console.log("No new data to update");
+            }
+            break;
+          } else {
+            // console.warn("Invalid polling response:", res.data);
+            retries--;
+          }
+        } catch (err) {
+          // console.error("Polling error:", {
+          //   message: err.message,
+          //   code: err.code,
+          //   status: err.response?.status,
+          //   data: err.response?.data,
+          //   url: `${API_URL}/api/rto`,
+          // });
+          if (err.response?.status === 401) {
+            setIsAuthenticated(false);
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            localStorage.removeItem("isAuthenticated");
+            break;
+          } else if (err.response?.status === 403) {
+            // console.warn("Polling forbidden for user role:", userRole);
+            break;
+          }
+          retries--;
+          if (retries === 0) {
+            // console.error("Polling failed after retries");
+          } else {
+            // console.log(`Retrying polling (${retries} attempts left)...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      setIsPolling(false);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, token, setSubmittedRTOs, setIsAuthenticated]);
 
   const handleEditClick = (row) => {
     setEditRowId(row.id);
@@ -143,7 +217,27 @@ const SubmittedRTOsPage = () => {
   };
 
   const columns = [
-    { field: "id", headerName: "ID", width: 70 },
+    // { field: "id", headerName: "ID", width: 70 }, // Id same as DB
+    {
+      field: "serialNo",
+      headerName: "S.No.",
+      width: 70,
+      renderCell: (params) => {
+        const apiRef = params.api;
+        const pagination = apiRef.state.pagination;
+        const page = Number(pagination.paginationModel?.page ?? pagination.page ?? 0);
+        const pageSize = Number(pagination.paginationModel?.pageSize ?? pagination.pageSize ?? 10);
+        const sortedRowIds = apiRef.getSortedRowIds() || [];
+        const totalRows = sortedRowIds.length;
+        const rowIndex = sortedRowIds.indexOf(params.id);
+        // console.log("SerialNo Debug:", { page, pageSize, rowIndex, id: params.id, totalRows, sortedRowIds });
+        if (isNaN(page) || isNaN(pageSize) || rowIndex === -1 || isNaN(totalRows)) {
+          // console.warn("Invalid serial number calculation:", { page, pageSize, rowIndex, totalRows });
+          return "-";
+        }
+        return totalRows - (page * pageSize + rowIndex);
+      },
+    },
     {
       field: "pickup_partner",
       headerName: "Pickup Partner",
@@ -361,7 +455,7 @@ const SubmittedRTOsPage = () => {
     {
       field: "actions",
       headerName: "Actions",
-      width: 150,
+      width: 100,
       sortable: false,
       filterable: false,
       renderCell: (params) =>
@@ -399,7 +493,7 @@ const SubmittedRTOsPage = () => {
         pageSize={10}
         rowsPerPageOptions={[10, 20, 50]}
         disableSelectionOnClick
-        loading={loading}
+        loading={loading && !isPolling}
         onRowDoubleClick={(params) => {
           setEditRowId(params.row.id);
           setEditData({ ...params.row });
