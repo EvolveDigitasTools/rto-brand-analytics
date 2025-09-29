@@ -26,7 +26,7 @@ router.get("/rto", async (req, res) => {
   let db;
   try {
     db = await dbPromise
-    const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY created_at DESC");
+    const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY id DESC");
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error("Error fetching RTO data:", error);
