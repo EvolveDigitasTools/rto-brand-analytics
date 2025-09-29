@@ -183,6 +183,7 @@ export const RTOProvider = ({ children }) => {
         logout, 
         submittedRTOs, 
         submitRTO, 
+        fetchSubmittedRTOs,
         loading, 
         error 
       }}

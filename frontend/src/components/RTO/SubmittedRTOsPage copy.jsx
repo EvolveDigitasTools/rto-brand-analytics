@@ -10,17 +10,17 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import axios from "axios";
 
 const PICKUP_PARTNERS = [
-  "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpressbees",
-  "Amazon", "Flipkart", "Tata 1mg", "Hyugai Life", "Nimbus",
-  "DTDC", "Meolaa"
-];
+    "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpressbees",
+    "Amazon", "Flipkart", "Tata 1mg", "Hyugai Life", "Nimbus",
+    "DTDC", "Meolaa"
+  ];
 const ITEM_CONDITIONS = ["Good", "Damaged", "Missing", "Wrong Return", "Used"];
 
 const formatDate = (dateString) => {
   if (!dateString) return "-";
   const date = parseISO(dateString);
   if (!isValid(date)) return "-";
-  return format(date, "yyyy-MM-dd");
+  return format(date, "yyyy-MM-dd"); // send to backend in YYYY-MM-DD
 };
 
 const formatDateTime = (dateString) => {
@@ -49,68 +49,55 @@ const SubmittedRTOsPage = () => {
   };
 
   const handleChange = (key, value) => {
-    // Trim text-based fields to prevent whitespace issues
-    const trimmedValue = ["awb_id", "sku_code", "product_title", "order_id", "ticket_id", "comments"].includes(key)
-      ? value.trim()
-      : value;
-    setEditData((prev) => ({ ...prev, [key]: trimmedValue }));
+    setEditData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async (id) => {
     if (!token) return alert("Not logged in");
 
-    // Validate awb_id
-    if (!editData.awb_id || editData.awb_id.trim() === "") {
+      // ✅ Add validation for claim_raised & ticket_id
+  if (editData.item_condition === "Good") {
+    // Automatically clear these fields if condition is good
+    editData.claim_raised = null;
+    editData.ticket_id = null;
+  } else {
+    // Validate fields when condition is not good
+    if (!editData.claim_raised || !editData.ticket_id) {
       setSnackbar({
         open: true,
-        message: "AWB ID is required",
+        message: "Claim Raised and Ticket ID are required when condition is not good",
         severity: "error",
       });
-      return;
+      return; // Stop update
     }
+  }
 
-    // Validate claim_raised and ticket_id
-    if (editData.item_condition === "Good") {
-      editData.claim_raised = null;
-      editData.ticket_id = null;
-    } else {
-      if (!editData.claim_raised || !editData.ticket_id) {
-        setSnackbar({
-          open: true,
-          message: "Claim Raised and Ticket ID are required when condition is not good",
-          severity: "error",
-        });
-        return;
-      }
-    }
-
+    // Convert dates to YYYY-MM-DD format before sending
     const payload = {
       ...editData,
       return_date: editData.return_date ? editData.return_date.split("T")[0] : null,
       order_date: editData.order_date ? editData.order_date.split("T")[0] : null,
     };
 
-    console.log("Payload sent to backend:", payload);
-    console.log("AWB ID in payload:", payload.awb_id);
-
     try {
-      const response = await axios.put(`${API_URL}/api/rto/${id}`, payload, {
+      await axios.put(`${API_URL}/api/rto/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Backend response:", response.data);
       fetchSubmittedRTOs();
       setEditRowId(null);
       setEditData({});
       setSnackbar({ open: true, message: "RTO updated successfully", severity: "success" });
     } catch (err) {
-      console.error("Update error:", err.response?.data, err.response?.status);
-      setSnackbar({
-        open: true,
-        message: err.response?.data?.message || "Failed to update record",
-        severity: "error",
-      });
+      console.error("Update error:", err);
+      
+      if (err.response?.status === 400 && err.response.data?.message) {
+      setSnackbar({ open: true, message: err.response.data.message, severity: "error" });
+
+    } else {
+      setSnackbar({ open: true, message: "Failed to update record", severity: "error" });
     }
-  };
+  }
+};
 
   const handleDelete = async (id) => {
     if (!token) return alert("Not logged in");
@@ -134,6 +121,7 @@ const SubmittedRTOsPage = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
+    // Pickup Partner
     {
       field: "pickup_partner",
       headerName: "Pickup Partner",
@@ -146,8 +134,6 @@ const SubmittedRTOsPage = () => {
             onChange={(e) => handleChange("pickup_partner", e.target.value)}
             size="small"
             onBlur={() => handleSave(params.row.id)}
-            onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           >
             {PICKUP_PARTNERS.map((option) => (
               <MenuItem key={option} value={option}>
@@ -159,10 +145,12 @@ const SubmittedRTOsPage = () => {
           params.value
         ),
     },
+    // AWB Id
     {
       field: "awb_id",
       headerName: "AWB ID",
       width: 130,
+      editable: true,
       renderCell: (params) =>
         editRowId === params.row.id ? (
           <TextField
@@ -171,18 +159,19 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           params.value
         ),
     },
+    // Return Date
     {
       field: "return_date",
       headerName: "Return Date",
       width: 150,
       renderCell: (params) => formatDate(params.value),
     },
+    // SKU Code
     {
       field: "sku_code",
       headerName: "SKU Code",
@@ -195,12 +184,12 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           params.value
         ),
     },
+    // Product Title
     {
       field: "product_title",
       headerName: "Product Title",
@@ -213,12 +202,12 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           params.value
         ),
     },
+    // Order Id
     {
       field: "order_id",
       headerName: "Order ID",
@@ -231,12 +220,12 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           params.value
         ),
     },
+    // Order Date
     {
       field: "order_date",
       headerName: "Dispatched Date",
@@ -250,12 +239,12 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           formatDate(params.value)
         ),
     },
+    // Item Condition
     {
       field: "item_condition",
       headerName: "Item Condition",
@@ -268,8 +257,6 @@ const SubmittedRTOsPage = () => {
             onChange={(e) => handleChange("item_condition", e.target.value)}
             size="small"
             onBlur={() => handleSave(params.row.id)}
-            onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           >
             {ITEM_CONDITIONS.map((option) => (
               <MenuItem key={option} value={option}>
@@ -281,12 +268,13 @@ const SubmittedRTOsPage = () => {
           params.value
         ),
     },
-    {
-      field: "claim_raised",
-      headerName: "Claim Raised",
-      width: 120,
+    // Claim Raised
+    { 
+      field: "claim_raised", 
+      headerName: "Claim Raised", 
+      width: 120, 
       renderCell: (params) =>
-        editRowId === params.row.id ? (
+       editRowId === params.row.id ? (
           <TextField
             select
             value={editData.claim_raised || ""}
@@ -295,33 +283,34 @@ const SubmittedRTOsPage = () => {
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
             fullWidth
-          >
+          > 
             <MenuItem value="">-- Select --</MenuItem>
             <MenuItem value="Yes">Yes</MenuItem>
             <MenuItem value="No">No</MenuItem>
           </TextField>
-        ) : (
-          params.value
-        ),
+      ) : (
+        params.value
+      ),
     },
-    {
-      field: "ticket_id",
-      headerName: "Ticket ID",
-      width: 130,
+    // Ticket Id
+    { 
+      field: "ticket_id", 
+      headerName: "Ticket ID", 
+      width: 130, 
       renderCell: (params) =>
-        editRowId === params.row.id ? (
+       editRowId === params.row.id ? (
           <TextField
             value={editData.ticket_id || ""}
             onChange={(e) => handleChange("ticket_id", e.target.value)}
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
-        ) : (
-          params.value
-        ),
+      ) : (
+        params.value
+      ),
     },
+    // Comments
     {
       field: "comments",
       headerName: "Comments",
@@ -334,20 +323,23 @@ const SubmittedRTOsPage = () => {
             size="small"
             onBlur={() => handleSave(params.row.id)}
             onKeyPress={(e) => handleKeyPress(e, params.row.id)}
-            fullWidth
           />
         ) : (
           params.value
         ),
     },
+    // Return QTY
     { field: "return_qty", headerName: "Return Qty", width: 120 },
+    // Created At
     {
       field: "created_at",
       headerName: "Created At",
       width: 180,
       renderCell: (params) => formatDateTime(params.value),
     },
+    // Created By
     { field: "created_by", headerName: "Created By", width: 150 },
+    // Actions (Edit & Delete)
     {
       field: "actions",
       headerName: "Actions",
@@ -388,10 +380,6 @@ const SubmittedRTOsPage = () => {
         rowsPerPageOptions={[10, 20, 50]}
         disableSelectionOnClick
         loading={loading}
-        onRowDoubleClick={(params) => {
-          setEditRowId(params.row.id);
-          setEditData({ ...params.row });
-        }}
       />
       <Snackbar
         open={snackbar.open}
