@@ -134,3 +134,4 @@ router.put("/users/:id/role", authorize(['superadmin']), async (req, res) => {
 });
 
 export default router;
+export { authorize };
