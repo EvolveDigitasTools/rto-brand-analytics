@@ -37,6 +37,16 @@ const SubmittedRTOsPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const API_URL = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem("token");
+  let user = {};
+  try {
+    const storedUser = localStorage.getItem("user");
+    user = storedUser ? JSON.parse(storedUser) : {};
+  } catch (err) {
+    console.error("Failed to parse user from localStorage:", err);
+    user = {};
+  }
+  const userRole = user.role || localStorage.getItem("role") || "user";
+  console.log("User role:", userRole);
 
   const handleEditClick = (row) => {
     setEditRowId(row.id);
@@ -369,9 +379,11 @@ const SubmittedRTOsPage = () => {
             <IconButton onClick={() => handleEditClick(params.row)}>
               <EditIcon color="primary" />
             </IconButton>
-            <IconButton onClick={() => handleDelete(params.row.id)}>
-              <DeleteIcon color="error" />
-            </IconButton>
+            {["admin", "superadmin"].includes(userRole) && (
+              <IconButton onClick={() => handleDelete(params.row.id)}>
+                <DeleteIcon color="error" />
+              </IconButton>
+            )}
           </>
         ),
     },

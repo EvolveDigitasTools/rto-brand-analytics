@@ -58,6 +58,7 @@ export const RTOProvider = ({ children }) => {
         const userData = {
           email: response.data.user.email,
           name: response.data.user.name || 'User', // Fallback to 'User' if name is not returned
+          role: response.data.user.role || 'user'
         };
         // Validate userData before storing
         if (!userData.email || !userData.name) {
