@@ -289,7 +289,6 @@ const RTOForm = () => {
                 type="date"
                 label="Dispatched Date"
                 variant="outlined"
-                required
                 value={field.orderDate} // <-- bind to state
                 onChange={(e) => handleChange(index, "orderDate", e.target.value)}
                 InputLabelProps={{ shrink: true }}
