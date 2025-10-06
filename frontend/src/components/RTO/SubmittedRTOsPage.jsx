@@ -201,11 +201,25 @@ const SubmittedRTOsPage = () => {
     if (!window.confirm("Are you sure you want to delete this RTO record?")) return;
 
     try {
+      // 1️⃣ Find record to archive before deletion
+      const recordToDelete = submittedRTOs.find((rto) => rto.id === id);
+      if (!recordToDelete) {
+        setSnackbar({ open: true, message: "Record not found", severity: "error" });
+        return;
+      }
+
+      // 2️⃣ Send record to backend 'deleted_rtos' table
+      await axios.post(`${API_URL}/api/deleted-rtos`, recordToDelete, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // 3️⃣ Delete from main RTO table
       await axios.delete(`${API_URL}/api/rto/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       fetchSubmittedRTOs();
-      setSnackbar({ open: true, message: "RTO deleted successfully", severity: "success" });
+      setSnackbar({ open: true, message: "RTO deleted & archived successfully", severity: "success" });
     } catch (err) {
       console.error("Delete error:", err);
       setSnackbar({ open: true, message: "Failed to delete record", severity: "error" });
