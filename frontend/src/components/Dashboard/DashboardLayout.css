@@ -1,0 +1,26 @@
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dashboard-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow: auto;
+  transition: margin-left 0.3s;
+}
+
+.main-content.sidebar-open {
+  width: calc(100% - 250px);
+}
+
+.main-content.sidebar-closed {
+  width: calc(100% - 70px);
+}

@@ -8,6 +8,7 @@ import SubmittedRTOsPage from './components/RTO/SubmittedRTOsPage';
 import SignIn from './components/Authorization/SignIn';
 import ProtectedRoute from "./components/ProtectedRoute";
 import DeletedRTOsPage from "./components/RTO/DeletedRTOsPage";
+import DashboardLayout from "./components/Dashboard/DashboardLayout";
 
 function HomeRoute() {
   const { isAuthenticated } = useContext(RTOContext);
@@ -18,13 +19,15 @@ function App() {
   return (
     <RTOProvider>
       <Router>
-        <Header />
         <Routes>
-          <Route path="/" element={<HomeRoute />} /> {/* Redirect to /rto-form if authenticated */}
+          <Route path="/" element={<HomeRoute />} />
+          
           <Route element={<ProtectedRoute />}>
-            <Route path="/rto-form" element={<RTOForm />} />
-            <Route path="/submitted-rto" element={<SubmittedRTOsPage />} />
-            <Route path="/deleted-rto" element={<DeletedRTOsPage />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/rto-form" element={<RTOForm />} />
+              <Route path="/submitted-rto" element={<SubmittedRTOsPage />} />
+              <Route path="/deleted-rto" element={<DeletedRTOsPage />} />
+            </Route>
           </Route>
         </Routes>
       </Router>
