@@ -2,6 +2,7 @@ import express from "express";
 import dbPromise from "../db.js";
 import jwt from "jsonwebtoken";
 import { getVendors, getPoCodes, getSkuByCode } from "../controllers/apiController.js";
+import { saveDeletedRto, getDeletedRtos, restoreDeletedRto, finalDeleteDeletedRto } from "../controllers/deletedRtoController.js";
 import { authorize } from "./authRoutes.js";
 
 const router = express.Router();
@@ -16,24 +17,40 @@ router.get("/", async (req, res) => {
     case "po-codes":
       return getPoCodes(req, res);
     case "skuCode":
-      return getSkuByCode(req, res);
+      return getSkuByCode(req, res);           
     default:  
       return res.status(400).json({ message: "Invalid type parameter" });
   }
 });
 
-// Get submitted RTO data - Phase 1 working
-// router.get("/rto", async (req, res) => {
-//   let db;
-//   try {
-//     db = await dbPromise
-//     const [rows] = await db.query("SELECT * FROM rto_submissions ORDER BY id DESC");
-//     res.json({ success: true, data: rows });
-//   } catch (error) {
-//     console.error("Error fetching RTO data:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
+// Get submitted RTO data - only for superadmin
+router.get("/rto/overview", authorize(['superadmin']), async (req, res) => {
+  let db;
+  try {
+    db = await dbPromise;
+    const result = await db.query("SELECT created_by FROM rto_submissions");
+    const rows = Array.isArray(result) ? result[0] : result;
+
+    if (!Array.isArray(rows)) {
+      return res.status(500).json({ success: false, message: "Unexpected DB response format" });
+    }
+
+    const countMap = {};
+    rows.forEach(row => {
+      countMap[row.created_by] = (countMap[row.created_by] || 0) + 1;
+    });
+
+    const labels = Object.keys(countMap);
+    const counts = Object.values(countMap);
+    const totalUsers = labels.length;
+    const totalRTOs = rows.length;
+
+    res.json({ success: true, labels, counts, totalUsers, totalRTOs });
+  } catch (error) {
+    console.error("Error fetching RTO overview:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 // GET RTO submissions with role-based filtering - Phase 2 Working
 router.get("/rto", authorize(['user','admin','superadmin']), async (req, res) => {
@@ -63,7 +80,6 @@ router.get("/rto", authorize(['user','admin','superadmin']), async (req, res) =>
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 // Submit RTO data - Phase 1 working
 router.post("/rto", async (req, res) => {
@@ -160,62 +176,6 @@ router.post("/rto", async (req, res) => {
   }
 });
 
-// Submit RTO data - Phase 2
-// router.post("/rto", authorize(['user','admin','superadmin']), async (req, res) => {
-//   try {
-//     const db = await dbPromise;
-//     const userEmail = req.user.email;
-//     const userId = Number(req.user.id); // still needed for assigned_to_admin if required
-
-//     const {
-//       sku_code,
-//       pickup_partner,
-//       awb_id,
-//       product_title,
-//       order_id,
-//       order_date,
-//       return_date,
-//       item_condition,
-//       claim_raised,
-//       ticket_id,
-//       comments,
-//       return_qty
-//     } = req.body;
-
-//     // optional logic for assigned admin
-//     const assignedToAdmin = req.user.role === "user" ? null : userId;
-
-//     const [result] = await db.query(
-//       `INSERT INTO rto_submissions
-//       (sku_code, pickup_partner, awb_id, product_title, order_id, order_date, return_date, item_condition, claim_raised, ticket_id, comments, return_qty, created_by)
-//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-//       [
-//         sku_code,
-//         pickup_partner,
-//         awb_id,
-//         product_title,
-//         order_id,
-//         order_date,
-//         return_date,
-//         item_condition,
-//         claim_raised,
-//         ticket_id,
-//         comments,
-//         return_qty,
-//         userEmail,
-//       ]
-//     );
-
-//     const [rows] = await db.query("SELECT * FROM rto_submissions WHERE id = ?", [result.insertId]);
-//     res.json({ success: true, data: rows[0] });
-//   } catch(err) {
-//     console.error("Error creating RTO:", err);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
-
-
 // Update RTO data - Phase 1
 router.put("/rto/:id", async (req, res) => {
   try {
@@ -303,45 +263,15 @@ router.put("/rto/:id", async (req, res) => {
   }
 });
 
+// -----Deleted RTOs Page-------- //
 
-// Update RTO data - Phase 2
-// router.put("/rto/:id", authorize(['user','admin','superadmin']), async (req,res) => {
-//   try {
-//     const db = await dbPromise;
-//     const userId = Number(req.user.id);
-//     const role = req.user.role;
-//     const rtoId = req.params.id;
+// Get Deleted RTOs Data for Deleted RTOs Page
+router.get("/deleted-rtos", getDeletedRtos);
 
-//     // Only allow user to edit their own record
-//     let query = "SELECT * FROM rto_submissions WHERE id = ?";
-//     const [rows] = await db.query(query, [rtoId]);
-//     if (rows.length === 0) return res.status(404).json({ success: false, message: "RTO not found" });
+// Delete Part 2 - Send Record to Deleted RTOs table to Deleted RTOs Page from Submitted RTOs
+router.post("/deleted-rtos", saveDeletedRto);
 
-//     const record = rows[0];
-//     if (role === "user" && record.created_by !== userId) {
-//       return res.status(403).json({ success: false, message: "Unauthorized" });
-//     }
-//     if (role === "admin" && record.assigned_to_admin !== userId) {
-//       return res.status(403).json({ success: false, message: "Unauthorized" });
-//     }
-
-//     // Update allowed fields
-//     const fields = ["sku_code","pickup_partner","awb_id","product_title","order_id","order_date","return_date","item_condition","claim_raised","ticket_id","comments","return_qty"];
-//     const updates = fields.map(f => `${f} = ?`).join(", ");
-//     const values = fields.map(f => req.body[f] ?? record[f]);
-//     values.push(rtoId);
-
-//     await db.query(`UPDATE rto_submissions SET ${updates} WHERE id = ?`, values);
-//     const [updatedRows] = await db.query("SELECT * FROM rto_submissions WHERE id = ?", [rtoId]);
-//     res.json({ success: true, data: updatedRows[0] });
-//   } catch(err) {
-//     console.error("Error updating RTO:", err);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
-
-// Delete RTO data - Phase 1 
+// Delete Part 2 - Delete from Submitted RTO data  
 router.delete("/rto/:id", async (req, res) => {
   try {
     const db = await dbPromise;
@@ -354,30 +284,10 @@ router.delete("/rto/:id", async (req, res) => {
   }
 });
 
-// Delete RTO Data - Phase 2
-// router.delete("/rto/:id", authorize(['user','admin','superadmin']), async (req,res) => {
-//   try {
-//     const db = await dbPromise;
-//     const userId = Number(req.user.id);
-//     const role = req.user.role;
-//     const rtoId = req.params.id;
+// Restore Deleted RTOs Data to Submitted RTOs
+router.post("/deleted-rtos/restore/:id", restoreDeletedRto);
 
-//     const [rows] = await db.query("SELECT * FROM rto_submissions WHERE id = ?", [rtoId]);
-//     if (rows.length === 0) return res.status(404).json({ success: false, message: "RTO not found" });
-
-//     const record = rows[0];
-//     if (role === "user" && record.created_by !== userId) return res.status(403).json({ success: false, message: "Unauthorized" });
-//     if (role === "admin" && record.assigned_to_admin !== userId) return res.status(403).json({ success: false, message: "Unauthorized" });
-
-//     await db.query("DELETE FROM rto_submissions WHERE id = ?", [rtoId]);
-//     res.json({ success: true, message: "RTO deleted" });
-//   } catch(err) {
-//     console.error("Error deleting RTO:", err);
-//     res.status(500).json({ success: false, message: "Server error" });
-//   }
-// });
-
-
-
+// Delete Part 3 - Final Delete from Deleted RTOs Page
+router.delete("/deleted-rtos/:id", finalDeleteDeletedRto);
 
 export default router;
