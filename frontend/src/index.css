@@ -100,3 +100,18 @@ button:hover .circle .icon.arrow {
 button:hover .button-text {
  color: #fff;
 }
+
+.overview-container {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  padding: 40px;
+  background: #f9fafb;
+
+}
+
+.overview-container h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 600;
+}

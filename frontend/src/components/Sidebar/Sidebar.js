@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaFileAlt, FaTrash, FaBars } from "react-icons/fa";
+import { FaFileAlt, FaTrash, FaBars, FaChartPie } from "react-icons/fa";
 import { AiOutlineFileDone } from "react-icons/ai";
 import { RTOContext } from "../../Context/RTOContext";
 import './Sidebar.css';
@@ -12,14 +12,25 @@ const Sidebar = () => {
 
     const [isOpen, setIsOpen] = useState(false); 
 
-  const menuItems = [
-    { name: "RTO Form", path: "/rto-form", icon: <FaFileAlt /> },
-    { name: "Submitted RTOs", path: "/submitted-rto", icon: <AiOutlineFileDone  /> },
-  ];
+    const menuItems = [];
 
-  if (role === "superadmin") {
-    menuItems.push({ name: "Deleted RTOs", path: "/deleted-rto", icon: <FaTrash /> });
-  }
+    if (role === "superadmin") {
+      menuItems.push(
+        { name: "Overview", path: "/overview", icon: <FaChartPie /> },
+      );
+    }
+
+    menuItems.push(
+      { name: "RTO Form", path: "/rto-form", icon: <FaFileAlt /> },
+      { name: "Submitted RTOs", path: "/submitted-rto", icon: <AiOutlineFileDone /> }
+    );
+
+    if (role === "superadmin") {
+      menuItems.push(
+        { name: "Deleted RTOs", path: "/deleted-rto", icon: <FaTrash /> }
+      );
+    }
+
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"} active-sidebar`}
