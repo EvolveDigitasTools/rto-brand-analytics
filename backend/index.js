@@ -4,26 +4,24 @@ import dotenv from "dotenv";
 import apiRoutes from "./routes/apiRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === "production" ? ".env.production" : ".env"
+});
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Proper CORS setup
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "https://rto.globalplugin.com", // Fallback if env missing
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              // Include OPTIONS
-  allowedHeaders: ["Content-Type", "Authorization"],                 // ✅ Allow Authorization header
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              
+  allowedHeaders: ["Content-Type", "Authorization"],                 
   credentials: true
 };
 
-app.use(cors(corsOptions)); // ✅ Handles preflight automatically
+app.use(cors(corsOptions));
 
-// ❌ Remove manual Access-Control headers — they break cors()
-
-// ✅ Routes
 app.use("/api", apiRoutes);
 app.use("/auth", authRoutes);
 

@@ -28,7 +28,7 @@ const authorize = (roles = []) => {
         return res.status(403).json({ success: false, message: "Unauthorized access" });
       }
 
-      req.user = user; // Attach user to request
+      req.user = user;
       next();
     } catch (err) {
       res.status(401).json({ success: false, message: "Invalid token" });
@@ -102,13 +102,36 @@ router.get("/me", authorize(['user', 'admin', 'superadmin']), async (req, res) =
 // 🟢 ADMIN-ONLY ROUTE - List all users
 router.get("/users", authorize(['admin', 'superadmin']), async (req, res) => {
   try {
-    const [users] = await db.query("SELECT id, name, email, role FROM rto_users");
+    const [users] = await db.query("SELECT id, name, email, role, created_at FROM rto_users");
     res.json({ success: true, users });
   } catch (err) {
     console.error("Users List Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
+// 🟢 DELETE USER - Only superadmin 
+router.delete("/users/:id", authorize(['superadmin']), async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    if (req.user.role === 'superadmin' && req.user.id === Number(userId)) {
+      return res.status(400).json({ success: false, message: "Superadmin cannot delete themselves" });
+    }
+
+    const [result] = await db.query("DELETE FROM rto_users WHERE id = ?", [userId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Delete User Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 
 // 🟢 SUPERADMIN-ONLY ROUTE - Update user role
 router.put("/users/:id/role", authorize(['superadmin']), async (req, res) => {
