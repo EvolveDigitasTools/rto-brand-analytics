@@ -11,20 +11,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "https://rto.globalplugin.com",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              
+  allowedHeaders: ["Content-Type", "Authorization"],                 
+  credentials: true
+};
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
-
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use("/api", apiRoutes);
 app.use("/auth", authRoutes);
