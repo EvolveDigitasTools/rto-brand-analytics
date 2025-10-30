@@ -140,6 +140,7 @@ const DeletedRTOsPage = () => {
   ];
 
   return (
+    <div className="submit_rto_tablee">
     <Box sx={{ height: 600, padding: 3 }}>
       <DataGrid
         rows={deletedRTOs}
@@ -157,6 +158,7 @@ const DeletedRTOsPage = () => {
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
     </Box>
+    </div>
   );
 };
 

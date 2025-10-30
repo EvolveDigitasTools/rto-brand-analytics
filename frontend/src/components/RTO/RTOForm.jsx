@@ -206,6 +206,7 @@ const RTOForm = () => {
   }, 0);
 
   return (
+    <div className="rto_form_stylin">
     <MainContainer component="form" onSubmit={handleSubmit}>
       {/* Pickup Partner + Return Date */}
       <FieldContainer>
@@ -399,6 +400,7 @@ const RTOForm = () => {
         </Alert>
       </Snackbar>
     </MainContainer>
+    </div>
   );
 };
 

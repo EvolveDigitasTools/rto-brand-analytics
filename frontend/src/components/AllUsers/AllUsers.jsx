@@ -3,6 +3,15 @@ import axios from "axios";
 import { RTOContext } from "../../Context/RTOContext";
 import './AllUsers.css';
 
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+  integrity="sha512-Kf1pU2x3Jr4hHhjwP+Z5DeuPvV3vJqUuF4J8O7t6hH3TZQ4vR7XvvzBfZzV5zK2qW7r4mPbiRZrx2pHIMm1sRw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+
+
 const AllUsers = () => {
     const API_URL = process.env.REACT_APP_API_URL;
     const { user } = useContext(RTOContext);
@@ -142,9 +151,13 @@ const AllUsers = () => {
     };
 
     return (
+        <div className="Rto_all_users_page">
+
         <div className="all-users-container">
+            
             <h2>
-                👥 All Users
+                <span className="userr_icon"><i class="fa-solid fa-users"></i></span>
+                All Users
             </h2>
 
             <form 
@@ -203,10 +216,10 @@ const AllUsers = () => {
                             <th>ID</th>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Password</th>
+                            <th style={{ width: "200px" }}>Password</th>
                             <th>Role</th>
                             <th>Created At</th>
-                            <th className="center">Actions</th>                            
+                            <th className="center" style={{ width: "200px" }}>Actions</th>                            
                         </tr>
                     </thead>
                     <tbody>
@@ -246,6 +259,8 @@ const AllUsers = () => {
                     </tbody>
                 </table>
             </div>
+        </div>
+
         </div>
     )
 }

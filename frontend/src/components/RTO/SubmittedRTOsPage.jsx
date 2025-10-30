@@ -498,6 +498,7 @@ const SubmittedRTOsPage = () => {
   ];
 
   return (
+<div className="submit_rto_tablee">
     <Box sx={{ height: 600, padding: 3 }}>
       {error && <Box sx={{ color: "red", mb: 2 }}>Error: {error}</Box>}
       <DataGrid
@@ -522,6 +523,7 @@ const SubmittedRTOsPage = () => {
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
     </Box>
+</div>
   );
 };
 

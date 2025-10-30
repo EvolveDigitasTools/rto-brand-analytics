@@ -121,3 +121,201 @@
   color: #6b7280;
   font-style: italic;
 }
+
+
+
+/* Sanchit - RTO All users css starts */
+
+
+/* Global Colors */
+:root {
+  --main-color: #75bfb0;
+  --main-light: #75bfb042;
+}
+
+
+.Rto_all_users_page .all-users-container {
+  background-color: #f9fafc;
+  padding: 30px;
+  border-radius: 12px;
+}
+
+
+.Rto_all_users_page .all-users-container h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #222;
+  border-bottom: 3px solid var(--main-color);
+  padding-bottom: 8px;
+  margin-bottom: 25px;
+}
+
+
+.Rto_all_users_page .user-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+}
+
+.Rto_all_users_page .user-form input,
+.Rto_all_users_page .user-form select {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid #5ea696aa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.Rto_all_users_page .user-form input:focus,
+.Rto_all_users_page .user-form select:focus {
+  border-color: var(--main-color);
+  outline: none;
+  box-shadow: 0 0 5px var(--main-light);
+}
+
+.Rto_all_users_page .user-form button {
+  background: var(--main-color);
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.Rto_all_users_page .user-form button:hover {
+  background: #5ea696;
+  transform: scale(1.03);
+}
+
+
+.Rto_all_users_page .table-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+}
+
+
+.Rto_all_users_page .users-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+
+.Rto_all_users_page .users-table thead {
+  background-color: var(--main-color);
+  color: white;
+}
+
+.Rto_all_users_page .users-table th {
+  padding: 12px 15px;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 1px solid #bfbfbf;
+  background: #5ea696;
+}
+
+
+.Rto_all_users_page .users-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease;
+}
+
+.Rto_all_users_page .users-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.Rto_all_users_page .users-table tbody tr:nth-child(even) {
+  background-color: #f7f7f7;
+}
+
+.Rto_all_users_page .users-table tbody tr:hover {
+  background-color: var(--main-light);
+}
+
+
+.Rto_all_users_page .users-table td {
+  padding: 12px 15px;
+  color: #333;
+  text-align: center;
+  border-right: 1px solid #e6e6e6;
+}
+
+.Rto_all_users_page .users-table td:last-child {
+  border-right: none;
+}
+
+
+.Rto_all_users_page .center {
+  text-align: center;
+}
+
+
+.Rto_all_users_page .edit-btn,
+.Rto_all_users_page .delete-btn {
+  border: none;
+  outline: none;
+  padding: 6px 12px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.Rto_all_users_page .edit-btn {
+  background-color: #5ea696;
+  color: #fff;
+}
+
+.Rto_all_users_page .edit-btn:hover {
+  background-color: #5ea696b5;
+  transform: translateY(-2px);
+}
+
+.Rto_all_users_page .user-form input.selected {
+    background: #5ea696b5 !important;
+}
+
+.Rto_all_users_page .delete-btn {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.Rto_all_users_page .delete-btn:hover {
+  background-color: #e85b5b;
+  transform: translateY(-2px);
+}
+
+
+.Rto_all_users_page .no-users {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+
+.userr_icon i.fa-solid.fa-users {
+    color: #5ea696;
+}
