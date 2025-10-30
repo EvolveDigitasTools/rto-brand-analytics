@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaFileAlt, FaTrash, FaBars, FaChartPie } from "react-icons/fa";
+import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers } from "react-icons/fa";
 import { AiOutlineFileDone } from "react-icons/ai";
 import { RTOContext } from "../../Context/RTOContext";
 import './Sidebar.css';
@@ -28,6 +28,12 @@ const Sidebar = () => {
     if (role === "superadmin") {
       menuItems.push(
         { name: "Deleted RTOs", path: "/deleted-rto", icon: <FaTrash /> }
+      );
+    }
+
+    if (role === "superadmin") {
+      menuItems.push(
+        { name: "All Users", path: "/all-users", icon: <FaUsers /> }
       );
     }
 
