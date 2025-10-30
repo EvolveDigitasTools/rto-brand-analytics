@@ -3,6 +3,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+    background-color: #ECF0F3;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -114,4 +115,165 @@ button:hover .button-text {
   margin-bottom: 20px;
   color: #333;
   font-weight: 600;
+}
+
+/* sanchit rto form css starts */
+
+.rto_form_stylin form.MuiBox-root.css-1th8btl {
+    width: 650px;
+    border-radius: 20px;
+    display: grid;
+    background: #ecf0f3;
+    box-shadow: 14px 14px 20px #cbced1, -14px -14px 20px white;
+    padding: 50px;
+    transition: all 0.3s ease-in-out;
+    color: #424141;
+}
+
+.rto_form_stylin {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f7fb;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+   color: #75bfb0 !important;
+   border-color: #75bfb0 !important;
+}
+
+.MuiFormLabel-root.Mui-focused {
+   color: #75bfb0 !important;
+   border-color: #75bfb0 !important;
+}
+
+button.learn-more .circle {
+  background-color: #75bfb0 !important;
+}
+
+
+
+
+
+/* sanchit submitted rto css starts */
+
+
+.submit_rto_tablee .MuiDataGrid-root {
+  
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  border: none;
+  overflow: visible !important;
+
+}
+
+
+.submit_rto_tablee .MuiDataGrid-columnHeaders {
+  background-color: #f5f7fa;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-cell {
+  border-bottom: 1px solid #e6e6e6;
+  border-right: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+}
+
+
+
+.submit_rto_tablee .MuiDataGrid-cell:last-child {
+  border-right: none;
+  overflow: visible !important;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-cell button {
+  overflow: visible !important;
+  z-index: 1;
+  position: relative;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-row:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.submit_rto_tablee .MuiDataGrid-row:nth-child(even) {
+  background-color: #f9fafc;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-row:hover {
+  
+   background-color: #75bfb042 !important;
+  transition: background-color 0.25s ease-in-out;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-footerContainer {
+  border-top: 2px solid #e0e0e0;
+  background-color: #f5f7fa;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-virtualScroller::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.submit_rto_tablee .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.submit_rto_tablee .MuiDataGrid-virtualScroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* action buttons visibility css starts */
+
+.submit_rto_tablee .MuiDataGrid-cell[data-field="actions"],
+.submit_rto_tablee .MuiDataGrid-cell--withRenderer {
+  overflow: visible !important;
+  min-width: 110px !important; 
+  justify-content: center;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-cell[data-field="actions"] svg,
+.submit_rto_tablee .MuiDataGrid-cell[data-field="actions"] button {
+  overflow: visible;
+  z-index: 2;
+  position: relative;
+  pointer-events: auto;
+}
+
+
+.submit_rto_tablee .MuiDataGrid-cell--textRight .MuiDataGrid-cellContent,
+.submit_rto_tablee .MuiDataGrid-cell--textLeft .MuiDataGrid-cellContent {
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+/* action buttons visibility css ends */
+
+.submit_rto_tablee .MuiDataGrid-columnHeader.MuiDataGrid-withBorderColor.MuiDataGrid-columnHeader--lastUnpinned.MuiDataGrid-columnHeader--last {
+    background: #75bfb0;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    font-family: system-ui;
+}
+
+.submit_rto_tablee .MuiDataGrid-columnHeader.MuiDataGrid-columnHeader--sortable.MuiDataGrid-withBorderColor {
+    background: #75bfb0;
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+    font-family: system-ui;
 }
