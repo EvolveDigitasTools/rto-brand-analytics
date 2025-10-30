@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.FRONTEND_URL || "https://rto.globalplugin.com",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              
   allowedHeaders: ["Content-Type", "Authorization"],                 
   credentials: true
