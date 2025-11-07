@@ -118,9 +118,14 @@ const AllUsers = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem("token");
-            const res = await axios.put(`${API_URL}/auth/users/${editingUserId}`, formData, {
-                headers: { Authorization: `Bearer ${token}`},
-            });
+            const res = await axios.put(
+                `${API_URL}/auth/users/${editingUserId}/role`, 
+                { role: formData.role }, 
+                {
+                  headers: { Authorization: `Bearer ${token}`},
+                }
+            );
+            
             setEditingUserId(null);
             setFormData({ 
                 name: "", 
