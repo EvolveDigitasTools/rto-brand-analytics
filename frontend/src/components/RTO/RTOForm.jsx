@@ -9,7 +9,6 @@ import styled from "@emotion/styled";
 // import { RTOContext } from "../../Context/RTOContext";
 
 
-
 const MainContainer = styled(Box)`
   display: grid;
   justify-content: center;
@@ -43,6 +42,10 @@ const RTOForm = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   // const { submitRTO } = useContext(RTOContext);
 
+  const marketPlaces = [
+    "Amazon", "Flipkart", "Meesho", "FirstCry", "Plugin Store"
+  ]
+
   const couriers = [
     "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpressbees",
     "Amazon", "Flipkart", "Tata 1mg", "Hyugai Life", "Nimbus",
@@ -69,6 +72,7 @@ const RTOForm = () => {
   ]);
 
   const [pickupPartner, setPickupPartner] = useState("");
+  const [allMarketPlaces, setAllMarketPlaces] = useState("");
 
   // ✅ Add new row, copy first row's SKU/productTitle if available
   const addField = () => {
@@ -158,12 +162,11 @@ const RTOForm = () => {
   // console.log("🔑 API URL:", API_URL);
   // console.log("🔑 Token:", token ? token.slice(0, 30) + "..." : "MISSING");
 
-  // ✅ Decode token to get email
-
   try {
     const res = await axios.post(`${API_URL}/api/rto`, {
+      marketplaces: allMarketPlaces,
       pickupPartner,
-      returnDate: new Date().toISOString().split("T")[0], // or bind from return date input
+      returnDate: new Date().toISOString().split("T")[0],
       fields,
       }, {
       headers: {
@@ -177,6 +180,7 @@ const RTOForm = () => {
     setOpenSnackbar(true);
     // Reset form
     setPickupPartner("");
+    setAllMarketPlaces("");
     setFields([{ 
       returnDate: "",
       skuCode: "", 
@@ -208,10 +212,23 @@ const RTOForm = () => {
   return (
     <div className="rto_form_stylin">
     <MainContainer component="form" onSubmit={handleSubmit}>
-      {/* Pickup Partner + Return Date */}
+      {/* MarketPlaces + Pickup Partner + Return Date */}
       <FieldContainer>
         <TextField
-          style={{ width: "75%" }}
+          style={{ width: "32%" }}
+          select
+          label="Marketplaces"
+          value={allMarketPlaces}
+          onChange={(e) => setAllMarketPlaces(e.target.value)}
+          required
+        >
+          <MenuItem value="">-- Select Marketplaces --</MenuItem>
+          {marketPlaces.map((marketPlace, i) => (
+            <MenuItem key={i} value={marketPlace}>{marketPlace}</MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          style={{ width: "35%" }}
           select
           label="Pickup Partner"
           value={pickupPartner}
@@ -225,7 +242,7 @@ const RTOForm = () => {
         </TextField>
 
         <TextField
-          style={{ width: "25%" }}
+          style={{ width: "35%" }}
           type="date"
           label="Return Date"
           variant="outlined"
@@ -339,16 +356,27 @@ const RTOForm = () => {
               )}
             </FieldContainer>
 
-            {/* Comments */}
+            {/* Comments + Return Qty */}
+            <FieldContainer>
             <TextField
-              style={{ width: "100%", maxHeight: "80px" }}
+              style={{ width: "70%", maxHeight: "80px" }}
               type="text"
               label="Comments"
               variant="outlined"
-              value={field.comments} // <-- bind to state
+              value={field.comments}
               onChange={(e) => handleChange(index, "comments", e.target.value)}
               required
             />
+            <TextField
+              style={{ width: "35%" }}
+              type="number"
+              label="Return Qty"
+              variant="outlined"
+              value={field.returnQty}
+              onChange={(e) => handleChange(index, "returnQty", e.target.value)}
+              required
+            />
+            </FieldContainer>
 
             {/* Add / Delete buttons */}
             <FieldContainer style={{ justifyContent: "center" }}>
@@ -368,8 +396,18 @@ const RTOForm = () => {
       })}
 
       {/* Submit + Total Return */}
-      <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px" }}>
-        <button type="submit" style={{ display: "flex", width: "68%" }} className="learn-more">
+      <Box 
+        style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          gap: "20px" 
+        }}>
+        <button 
+          type="submit" 
+          style={{ display: "flex", width: "70%" }} 
+          className="learn-more"
+        >
           <span className="circle" aria-hidden="true">
             <span className="icon arrow"></span>
           </span>
@@ -379,9 +417,9 @@ const RTOForm = () => {
         </button>
 
         <TextField
-          style={{ width: "29%" }}
+          style={{ width: "35%" }}
           type="number"
-          label="Total Return"
+          label="Total Return Qty"
           variant="outlined"
           value={totalReturn}
           InputProps={{ readOnly: true }}
@@ -395,7 +433,11 @@ const RTOForm = () => {
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: "100%" }}>
+        <Alert 
+          onClose={() => setOpenSnackbar(false)} 
+          severity="success" 
+          sx={{ width: "100%" }}
+        >
           RTO submitted successfully!
         </Alert>
       </Snackbar>

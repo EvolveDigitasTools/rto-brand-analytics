@@ -252,6 +252,7 @@ const SubmittedRTOsPage = () => {
         return totalRows - (page * pageSize + rowIndex);
       },
     },
+    { field: "marketplaces", headerName: "Marketplaces", width: 120 },
     {
       field: "pickup_partner",
       headerName: "Pickup Partner",
