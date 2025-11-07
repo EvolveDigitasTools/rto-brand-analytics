@@ -3,6 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import apiRoutes from "./routes/apiRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import submitRtoRoutes from "./routes/submitRtoRoutes.js";
+import submittedRtoRoutes from "./routes/submittedRtoRoutes.js";
+import deletedRtoRoutes from "./routes/deletedRtoRoutes.js";
+import overviewRtoRoutes from "./routes/overviewRtoRoutes.js";
 
 dotenv.config();
 
@@ -20,7 +24,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use("/api", apiRoutes);
+app.use("/api", 
+  apiRoutes, 
+  submitRtoRoutes,
+  submittedRtoRoutes,
+  deletedRtoRoutes,
+  overviewRtoRoutes,
+);
 app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {
@@ -30,5 +40,5 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-  console.log(`Backend running on port http://localhost:${PORT}`);
+  console.log(`Backend running on port ${PORT}`);
 });

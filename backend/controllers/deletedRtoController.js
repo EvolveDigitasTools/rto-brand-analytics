@@ -11,6 +11,7 @@ export const saveDeletedRto = async (req, res) => {
       sku_code,
       product_title,
       order_id,
+      marketplaces,
       pickup_partner,
       return_date,
       order_date,
@@ -65,10 +66,10 @@ export const saveDeletedRto = async (req, res) => {
     // ✅ Save to deleted_rtos
     const sql = `
       INSERT INTO deleted_rtos (
-        awb_id, sku_code, product_title, order_id, pickup_partner,
+        awb_id, sku_code, product_title, order_id, marketplaces, pickup_partner,
         return_date, order_date, item_condition, claim_raised, ticket_id,
         comments, return_qty, created_at, created_by, deleted_at, deleted_by
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `;
 
     await db.query(sql, [
@@ -76,6 +77,7 @@ export const saveDeletedRto = async (req, res) => {
       sku_code || null,
       product_title || null,
       order_id || null,
+      marketplaces || null,
       pickup_partner || null,
       formattedReturnDate,
       formattedOrderDate,
@@ -113,6 +115,7 @@ export const getDeletedRtos = async (req, res) => {
         sku_code,
         product_title,
         order_id,
+        marketplaces,
         pickup_partner,
         DATE_FORMAT(return_date, '%Y-%m-%d') AS return_date,
         DATE_FORMAT(order_date, '%Y-%m-%d') AS order_date,
@@ -156,10 +159,10 @@ export const restoreDeletedRto = async (req, res) => {
 
     await db.query(
       `INSERT INTO rto_submissions 
-      (pickup_partner, return_date, sku_code, product_title, awb_id, order_id, order_date, courier, item_condition, claim_raised, ticket_id, return_qty, comments, created_at, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (marketplaces, pickup_partner, return_date, sku_code, product_title, awb_id, order_id, order_date, courier, item_condition, claim_raised, ticket_id, return_qty, comments, created_at, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        rto.pickup_partner, rto.return_date, rto.sku_code, rto.product_title, rto.awb_id,
+        rto.marketplaces, rto.pickup_partner, rto.return_date, rto.sku_code, rto.product_title, rto.awb_id,
         rto.order_id, rto.order_date, rto.courier, rto.item_condition, rto.claim_raised,
         rto.ticket_id, rto.return_qty, rto.comments, rto.created_at, rto.created_by
       ]
