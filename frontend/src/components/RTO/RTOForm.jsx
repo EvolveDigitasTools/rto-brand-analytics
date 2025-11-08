@@ -72,6 +72,7 @@ const RTOForm = () => {
   ]);
 
   const [pickupPartner, setPickupPartner] = useState("");
+  const [returnDate, setReturnDate] = useState("");
   const [allMarketPlaces, setAllMarketPlaces] = useState("");
 
   // ✅ Add new row, copy first row's SKU/productTitle if available
@@ -149,6 +150,46 @@ const RTOForm = () => {
     });
   }
 };
+
+// Fetch Data with Awb id
+const fetchAwbData = async (awbId, index) => {
+  if (!awbId) return;
+
+  try {
+    const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
+    const rto = res.data.data;
+
+    const formatDate = (dateString) => {
+      if (!dateString) return "";
+      return new Date(dateString).toISOString().split("T")[0];
+    };
+
+    setFields((prev) => {
+      const updated = [...prev];
+      if (!updated[index]) return prev;
+
+      updated[index] = {
+        ...updated[index],
+        awbId,
+        skuCode: rto.sku || "",
+        productTitle: rto.product_name || "",
+        courier: rto.courier_partner || "",
+        orderId: rto.order_number || "",
+        orderDate: formatDate(rto.dispatch_date),
+        returnQty: rto.qty || "",
+      };
+      return updated;
+    });
+
+    if (rto.courier_partner) setPickupPartner(rto.courier_partner);
+    if (rto.return_created_date)
+    setReturnDate(formatDate(rto.return_created_date));
+
+  } catch (err) {
+    console.error("❌ Error fetching AWB:", err.response?.data || err.message);
+  }
+};
+
 
   // ✅ Submit form
   const handleSubmit = async (e) => {
@@ -246,6 +287,8 @@ const RTOForm = () => {
           type="date"
           label="Return Date"
           variant="outlined"
+          value={returnDate}
+          onChange={(e) => setReturnDate(e.target.value)}
           required
           InputLabelProps={{ shrink: true }}
         />
@@ -293,7 +336,15 @@ const RTOForm = () => {
                 variant="outlined"
                 required
                 value={field.awbId}
-                onChange={(e) => handleChange(index, "awbId", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleChange(index, "awbId", value);
+
+                  if (value.length >= 8) {
+                    clearTimeout(window.awbTimer);
+                    window.awbTimer = setTimeout(() => fetchAwbData(value, index), 600);
+                  }
+                }}
               />
               <TextField
                 style={{ width: "35%" }}

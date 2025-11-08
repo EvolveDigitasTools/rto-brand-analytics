@@ -92,7 +92,7 @@ const Meesho = () => {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${API_URL}/api/meesho-sse`, {
+      const response = await fetch(`${API_URL}/api/rto-upload?source=meesho`, {
         method: "POST",
         body: formData,
       });
