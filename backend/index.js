@@ -7,6 +7,7 @@ import submitRtoRoutes from "./routes/submitRtoRoutes.js";
 import submittedRtoRoutes from "./routes/submittedRtoRoutes.js";
 import deletedRtoRoutes from "./routes/deletedRtoRoutes.js";
 import overviewRtoRoutes from "./routes/overviewRtoRoutes.js";
+import marketplacesRtoUploadRoute from "./routes/marketplacesRtoUploadRoutes.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api",
   submittedRtoRoutes,
   deletedRtoRoutes,
   overviewRtoRoutes,
+  marketplacesRtoUploadRoute,
 );
 app.use("/auth", authRoutes);
 

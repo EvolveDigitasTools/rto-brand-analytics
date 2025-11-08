@@ -12,6 +12,9 @@ try {
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
     port: process.env.DATABASE_PORT,
+    waitForConnections: true,
+    connectionLimit: 50,
+    queueLimit: 0,
   });
 
   console.log("✅ Connected to MySQL database");
