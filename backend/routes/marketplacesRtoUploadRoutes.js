@@ -1,8 +1,8 @@
 import express from "express";
-import { uploadMeeshoSSE } from "../controllers/marketplacesRtoUploadController.js";
+import { uploadRtoSSE } from "../controllers/rto-upload/marketplacesRTOUploadController.js";
 
 const router = express.Router();
 
-router.post("/meesho-sse", uploadMeeshoSSE);
+router.post("/rto-upload", uploadRtoSSE);
 
-export default router;
+export default router;  

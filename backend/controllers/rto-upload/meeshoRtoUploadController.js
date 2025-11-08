@@ -2,7 +2,7 @@ import Busboy from "busboy";
 import * as csv from "fast-csv";
 import Excel from "exceljs";
 import path from "path";
-import db from "../db.js"; 
+import db from "../../db.js"; 
 
 const tableName = "meesho_rto_data";
 const BATCH_SIZE = 200;
@@ -161,7 +161,6 @@ function normalizeRowByHeader(row) {
   return obj;
 }
 
-// ---------- DB insert (INSERT IGNORE to skip dup AWB) ----------
 async function insertBatch(rows) {
   if (!rows.length) return { inserted: 0 };
 
@@ -197,7 +196,6 @@ async function insertBatch(rows) {
   }
 }
 
-// ---------- main controller ----------
 export async function uploadMeeshoSSE(req, res) {
   // SSE headers
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
