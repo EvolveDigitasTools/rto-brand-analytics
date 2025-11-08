@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers } from "react-icons/fa";
+import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers, FaCloudUploadAlt } from "react-icons/fa";
 import { AiOutlineFileDone } from "react-icons/ai";
 import { RTOContext } from "../../Context/RTOContext";
 import './Sidebar.css';
@@ -34,6 +34,12 @@ const Sidebar = () => {
     if (role === "superadmin") {
       menuItems.push(
         { name: "All Users", path: "/all-users", icon: <FaUsers /> }
+      );
+    }
+
+    if (role === "superadmin" || role === "admin") {
+      menuItems.push(
+        {name: "Upload RTO Data", path: "/all-marketplaces", icon: <FaCloudUploadAlt  /> }
       );
     }
 

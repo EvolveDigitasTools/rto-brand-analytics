@@ -10,6 +10,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DeletedRTOsPage from "./components/RTO/DeletedRTOsPage";
 import DashboardLayout from "./components/Dashboard/DashboardLayout";
 import AllUsers from "./components/AllUsers/AllUsers";
+import MarketplacesRTOData from "./components/RTO/UploadRTOData/MarketplacesRTOData";
+import Amazon from "./components/RTO/UploadRTOData/Amazon";
+import Flipkart from "./components/RTO/UploadRTOData/Flipkart";
+import Meesho from "./components/RTO/UploadRTOData/Meesho";
 
 function HomeRoute() {
   const { isAuthenticated } = useContext(RTOContext);
@@ -30,6 +34,10 @@ function App() {
               <Route path="/deleted-rto" element={<DeletedRTOsPage />} />
               <Route path="/overview" element={<Overview />} />
               <Route path="/all-users" element={<AllUsers />} />
+              <Route path="/all-marketplaces" element={<MarketplacesRTOData />} />
+              <Route path="/amazon" element={<Amazon />} />
+              <Route path="/flipkart" element={<Flipkart />} />
+              <Route path="/meesho" element={<Meesho />} />                                          
             </Route>
           </Route>
         </Routes>
