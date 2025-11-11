@@ -252,7 +252,7 @@ const SubmittedRTOsPage = () => {
         return totalRows - (page * pageSize + rowIndex);
       },
     },
-    { field: "marketplaces", headerName: "Marketplaces", width: 120 },
+    { field: "marketplaces", headerName: "Marketplace", width: 120 },
     {
       field: "pickup_partner",
       headerName: "Pickup Partner",
@@ -514,7 +514,22 @@ const SubmittedRTOsPage = () => {
           setEditRowId(params.row.id);
           setEditData({ ...params.row });
         }}
-      />
+      />4
+
+      <button
+        onClick={() => (window.location.href = "/inventory-update-preview")}
+          style={{
+            backgroundColor: "#007bff",
+            color: "white",
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Update Inventory
+      </button>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

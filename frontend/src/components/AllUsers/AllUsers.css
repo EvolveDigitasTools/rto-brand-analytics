@@ -298,8 +298,8 @@
 }
 
 .Rto_all_users_page .delete-btn {
-  background-color: #ff6b6b;
-  color: white;
+    background-color: #b70000;
+    color: #fff;
 }
 
 .Rto_all_users_page .delete-btn:hover {

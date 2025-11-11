@@ -55,9 +55,7 @@ function Header() {
     else navigate("/submitted-rto");
   };
 
-  // Placeholder for fetching user name from MySQL database based on user.email
-  // In a real implementation, you would query the database here using user.email
-  const userName = user ? user.name || 'User' : 'Guest'; // Fallback to 'User' if name is not available
+  const userName = user ? user.name || 'User' : 'Guest';
 
   return (
     <AppBar position="static" style={{ background: "#424141" }}>
@@ -120,7 +118,7 @@ function Header() {
                 color: 'inherit',
               }}
             >
-              RTO Submission
+              RTO System
             </Typography>
           </Box>
 

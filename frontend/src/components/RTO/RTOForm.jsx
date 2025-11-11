@@ -43,7 +43,7 @@ const RTOForm = () => {
   // const { submitRTO } = useContext(RTOContext);
 
   const marketPlaces = [
-    "Amazon", "Flipkart", "Meesho", "FirstCry", "Plugin Store"
+    "Amazon", "Flipkart", "Meesho", "FirstCry", "Pluugin Store"
   ]
 
   const couriers = [
@@ -189,7 +189,6 @@ const fetchAwbData = async (awbId, index) => {
     console.error("❌ Error fetching AWB:", err.response?.data || err.message);
   }
 };
-
 
   // ✅ Submit form
   const handleSubmit = async (e) => {

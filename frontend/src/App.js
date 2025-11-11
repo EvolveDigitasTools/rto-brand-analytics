@@ -14,6 +14,8 @@ import MarketplacesRTOData from "./components/RTO/UploadRTOData/MarketplacesRTOD
 import Amazon from "./components/RTO/UploadRTOData/Amazon";
 import Flipkart from "./components/RTO/UploadRTOData/Flipkart";
 import Meesho from "./components/RTO/UploadRTOData/Meesho";
+import GoodConditionRtoPage from "./components/RTO/GoodConditionRtoPage";
+import InventoryUpdateHistory from "./components/RTO/InventoryUpdateHistory";
 
 function HomeRoute() {
   const { isAuthenticated } = useContext(RTOContext);
@@ -37,7 +39,9 @@ function App() {
               <Route path="/all-marketplaces" element={<MarketplacesRTOData />} />
               <Route path="/amazon" element={<Amazon />} />
               <Route path="/flipkart" element={<Flipkart />} />
-              <Route path="/meesho" element={<Meesho />} />                                          
+              <Route path="/meesho" element={<Meesho />} />
+              <Route path="/good-condition-rtos" element={<GoodConditionRtoPage />} />
+              <Route path="/inventory-update-history" element={<InventoryUpdateHistory />} />                                                         
             </Route>
           </Route>
         </Routes>

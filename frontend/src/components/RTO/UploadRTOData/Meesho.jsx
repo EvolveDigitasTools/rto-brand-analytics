@@ -178,34 +178,26 @@ const Meesho = () => {
   };
 
   return (
-    <div style={{ textAlign: "center" }}>
-      <h1>Meesho RTO Data Upload</h1>
-
+    <div className="amazonn-wrapper">
+      <h1 className="amazonn-heading">Meesho RTO Data Upload</h1>
+  <div className="amazonn-container">
       <form
         onSubmit={handleSubmit}
-        style={{
-          display: "grid",
-          justifyContent: "center",
-          gap: "10px",
-          marginTop: "20px",
-        }}
+       className="amazonn-form"
       >
         <input
           type="file"
           accept=".csv, .xlsx, .xls"
           onChange={handleFileChange}
           disabled={uploading}
+          className="amazonn-file"
         />
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+       
           <button
             type="submit"
             disabled={!file || uploading}
+            className="amazonn-btn"
             style={{
-              backgroundColor: "#20611bff",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
               cursor: !file || uploading ? "not-allowed" : "pointer",
               opacity: !file || uploading ? 0.7 : 1,
             }}
@@ -227,8 +219,9 @@ const Meesho = () => {
               Reset
             </button>
           )}
-        </div>
+        
       </form>
+      </div>
 
       {/* Progress Section */}
       {(uploading || success || errorMsg) && (

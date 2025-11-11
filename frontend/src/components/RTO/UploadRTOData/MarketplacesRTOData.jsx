@@ -6,36 +6,24 @@ const MarketplacesRTOData = () => {
 
   return (
     <div style={{ textAlign: "center" }}>
-      <h3>Upload All Marketplaces RTO Data</h3>
+      <h3 className="market_place">Upload All Marketplaces RTO Data</h3>
       <div style={{ marginBottom: "20px" }}>
-        <button
-          style={{
-            width: "100px",
-            border: "1px solid black",
-            margin: "0 20px",
-          }}
+        <button className="button2" 
+         
           onClick={() => navigate("/amazon")}
         >
           Amazon
         </button>
 
-        <button
-          style={{
-            width: "100px",
-            border: "1px solid black",
-            margin: "0 20px",
-          }}
+        <button className="button2" 
+          
           onClick={() => navigate("/flipkart")}
         >
           Flipkart
         </button>
 
-        <button
-          style={{
-            width: "100px",
-            border: "1px solid black",
-            margin: "0 20px",
-          }}
+        <button className="button2" 
+         
           onClick={() => navigate("/meesho")}
         >
           Meesho

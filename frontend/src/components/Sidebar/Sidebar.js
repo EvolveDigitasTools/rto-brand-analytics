@@ -43,6 +43,17 @@ const Sidebar = () => {
       );
     }
 
+    if (role === "superadmin" || role === "admin") {
+      menuItems.push(
+        {name: "Good Condition RTOs", path: "/good-condition-rtos", icon: <FaCloudUploadAlt  />}
+      );
+    }
+
+    if (role === "superadmin" || role === "admin") {
+      menuItems.push(
+        {name: "Inventory Update History", path: "/inventory-update-history", icon: <FaCloudUploadAlt  />}
+      );
+    }
 
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"} active-sidebar`}

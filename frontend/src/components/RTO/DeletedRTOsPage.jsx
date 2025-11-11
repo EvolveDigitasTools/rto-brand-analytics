@@ -80,7 +80,7 @@ const DeletedRTOsPage = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 50 },
-    {field: "marketplaces", headerName: "Martketplaces", width: 150 },
+    {field: "marketplaces", headerName: "Martketplace", width: 150 },
     { field: "pickup_partner", headerName: "Pickup Partner", width: 150 },    
     { field: "awb_id", headerName: "AWB ID", width: 150 },
     { 
