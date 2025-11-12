@@ -1,0 +1,153 @@
+.over-loading {
+  display: flex;
+  justify-content: center;
+}
+.rto-overview {
+  padding: 20px;
+}
+
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.overview-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.overview-card:hover {
+  transform: translateY(-2px);
+}
+
+.overview-card h4 {
+  color: #777;
+  font-weight: 500;
+}
+
+.overview-card h2 {
+  color: #333;
+  margin-top: 8px;
+}
+
+.overview-main {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.chart-section {
+  flex: 1;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 50%;
+}
+
+.total-rto-text {
+  font-size: 2rem;
+  color: #444;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+.total-rto-text strong {
+  color: #1e90ff;
+  font-weight: 600;
+}
+
+.top-rto-section {
+  flex: 1;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: auto;
+}
+
+.top-rto-section h3 {
+    /* margin-top: -10px; */
+    padding-bottom: 10px;
+}
+
+.top-rto-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.top-rto-section th,
+.top-rto-section td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.top-rto-section tr:hover {
+  background: #f9f9f9;
+}
+
+.table-wrapper {
+  max-height: 420px;       
+  overflow-y: hidden;         
+  overflow-x: hidden;
+  margin-top: 15px;
+  border-radius: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.no-data {
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+  padding: 80px 0;
+}
+
+.view-all {
+  margin-top: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.view-all:hover {
+  background: #0056b3;
+}
+
+.doughnut-section {
+  background: #fff;
+  flex: 1;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
+  text-align: center;
+  width: 50%;
+}
+
+.doughnut-wrapper {
+  width: 300px;
+  margin: 0 auto;
+}

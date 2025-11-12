@@ -4,7 +4,7 @@ import './App.css';
 import { RTOProvider, RTOContext } from "./Context/RTOContext";
 import RTOForm from './components/RTO/RTOForm';
 import SubmittedRTOsPage from './components/RTO/SubmittedRTOsPage';
-import Overview from "./components/RTO/Overview";
+import Overview from "./components/Overview/Overview";
 import SignIn from './components/Authorization/SignIn';
 import ProtectedRoute from "./components/ProtectedRoute";
 import DeletedRTOsPage from "./components/RTO/DeletedRTOsPage";
