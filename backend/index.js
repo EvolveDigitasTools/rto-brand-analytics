@@ -9,6 +9,7 @@ import deletedRtoRoutes from "./routes/deletedRtoRoutes.js";
 import overviewRtoRoutes from "./routes/overviewRtoRoutes.js";
 import marketplacesRtoUploadRoute from "./routes/marketplacesRtoUploadRoutes.js";
 import meeshoRtoDataRoutes from "./routes/meeshoRtoDataRoutes.js";
+import rtoToMasterInventoryRoutes from "./routes/rto-to-masterInventoryRoutes.js";
 
 dotenv.config();
 
@@ -33,7 +34,8 @@ app.use("/api",
   deletedRtoRoutes,
   overviewRtoRoutes,
   marketplacesRtoUploadRoute,
-  meeshoRtoDataRoutes
+  meeshoRtoDataRoutes,
+  rtoToMasterInventoryRoutes
 );
 app.use("/auth", authRoutes);
 

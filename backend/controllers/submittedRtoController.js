@@ -1,23 +1,40 @@
 import dbPromise from "../db.js";
 
 export const getRTODataRoleBased = async (req, res) => {
-    let db;
+  let db;
   try {
     db = await dbPromise;
 
-    let query = "SELECT * FROM rto_submissions ORDER BY id DESC";
+    let query = `
+      SELECT * FROM rto_submissions
+      WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+      ORDER BY id DESC
+    `;
     let params = [];
 
-    if (req.user.role === 'user') {
-      // Only return rows created by this user's email
-      query = "SELECT * FROM rto_submissions WHERE created_by = ? ORDER BY id DESC";
+    if (req.user.role === "user") {
+      // Regular user: only their own unprocessed RTOs
+      query = `
+        SELECT * FROM rto_submissions
+        WHERE created_by = ?
+          AND (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+        ORDER BY id DESC
+      `;
       params = [req.user.email];
-    } else if (req.user.role === 'admin') {
-      // Admin can see all rows; optionally filter if you have assigned admins
-      query = "SELECT * FROM rto_submissions ORDER BY id DESC";
-    } else if (req.user.role === 'superadmin') {
-      // Superadmin sees everything
-      query = "SELECT * FROM rto_submissions ORDER BY id DESC";
+    } else if (req.user.role === "admin") {
+      // Admin: all unprocessed RTOs
+      query = `
+        SELECT * FROM rto_submissions
+        WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+        ORDER BY id DESC
+      `;
+    } else if (req.user.role === "superadmin") {
+      // Superadmin: all unprocessed RTOs
+      query = `
+        SELECT * FROM rto_submissions
+        WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+        ORDER BY id DESC
+      `;
     }
 
     const [rows] = await db.query(query, params);

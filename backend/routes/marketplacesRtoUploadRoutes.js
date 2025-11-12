@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadRtoSSE } from "../controllers/rto-upload/marketplacesRTOUploadController.js";
+import { uploadRtoSSE } from "../controllers/rto-data-upload/marketplacesRTOUploadController.js";
 
 const router = express.Router();
 
