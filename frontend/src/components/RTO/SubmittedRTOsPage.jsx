@@ -1,5 +1,13 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from "react";
-import { Box, TextField, IconButton, Snackbar, Alert, MenuItem } from "@mui/material";
+import { 
+  Dialog, DialogTitle, 
+  DialogContent, DialogActions, 
+  Button, Typography, Table, 
+  TableHead, TableRow, TableCell, 
+  TableBody, Box, TextField, 
+  IconButton, Snackbar, 
+  Alert, MenuItem, CircularProgress 
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { RTOContext } from "../../Context/RTOContext";
 import { format, parseISO, isValid } from "date-fns";
@@ -31,9 +39,20 @@ const formatDateTime = (dateString) => {
 };
 
 const SubmittedRTOsPage = () => {
-  const { submittedRTOs, setSubmittedRTOs, loading, error, fetchSubmittedRTOs, isAuthenticated, setIsAuthenticated } = useContext(RTOContext);
+  const { 
+    submittedRTOs, 
+    setSubmittedRTOs, 
+    loading, error, 
+    fetchSubmittedRTOs, 
+    isAuthenticated, 
+    setIsAuthenticated 
+  } = useContext(RTOContext);
   const [editRowId, setEditRowId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [openPopup, setOpenPopup] = useState(false);
+  const [selectedRowsData, setSelectedRowsData] = useState([]);
+  const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [isPolling, setIsPolling] = useState(false);
   const prevRTOsRef = useRef(submittedRTOs);
@@ -228,6 +247,14 @@ const SubmittedRTOsPage = () => {
 
   const handleKeyPress = (e, id) => {
     if (e.key === "Enter") handleSave(id);
+  };
+
+  const handleClosePopup = (resetSelection = false) => {
+    setOpenPopup(false);
+
+    if (resetSelection) {
+      setSelectedRows([]);
+    }
   };
 
   const columns = [
@@ -499,47 +526,185 @@ const SubmittedRTOsPage = () => {
   ];
 
   return (
-<div className="submit_rto_tablee">
-    <Box sx={{ height: 600, padding: 3 }}>
-      {error && <Box sx={{ color: "red", mb: 2 }}>Error: {error}</Box>}
-      <DataGrid
-        rows={submittedRTOs}
-        columns={columns}
-        getRowId={(row) => row.id}
-        pageSize={10}
-        rowsPerPageOptions={[10, 20, 50]}
-        disableSelectionOnClick
-        loading={loading && !isPolling}
-        onRowDoubleClick={(params) => {
-          setEditRowId(params.row.id);
-          setEditData({ ...params.row });
-        }}
-      />4
+  <div className="submit_rto_tablee">
+      <Box sx={{ height: 575, padding: 3 }}>
+        {error && <Box sx={{ color: "red", mb: 2 }}>Error: {error}</Box>}
+        <DataGrid
+          rows={submittedRTOs}
+          columns={columns}
+          getRowId={(row) => row.id}
+          pageSize={10}
+          rowsPerPageOptions={[10, 20, 50]}
+          disableSelectionOnClick
+          checkboxSelection={["admin", "superadmin"].includes(userRole)}
+          loading={loading && !isPolling}
+          // onRowSelectionModelChange={(ids) => setSelectedRows(ids)}
+          onRowSelectionModelChange={(selection) => {
+            if (!["admin", "superadmin"].includes(userRole)) return;
+              setSelectedRows(Array.from(selection.ids || []))}
+          }
 
-      <button
-        onClick={() => (window.location.href = "/inventory-update-preview")}
-          style={{
-            backgroundColor: "#007bff",
-            color: "white",
-            padding: "10px 18px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: "bold",
+          onRowDoubleClick={(params) => {
+            setEditRowId(params.row.id);
+            setEditData({ ...params.row });
           }}
+        />
+        
+        {/* Update Inventory Button */}
+        {["admin", "superadmin"].includes(userRole) && (
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={updating}
+          startIcon={updating && <CircularProgress size={18} color="inherit" />}
+          onClick={() => {
+            if (selectedRows.length === 0) {
+              // ✅ Select only rows with good condition
+              const goodRows = submittedRTOs.filter(
+                r => r.item_condition === "Good" || r["Item Condition"] === "Good"
+              );
+              const goodRowIds = goodRows.map(r => r.id);
+
+              if (goodRowIds.length === 0) {
+                setSnackbar({
+                  open: true,
+                  message: "No 'Good' condition records available for update.",
+                  severity: "warning",
+                });
+                return;
+              }
+
+              setSelectedRows(goodRowIds);
+              setSnackbar({
+                open: true,
+                message: `Selected ${goodRowIds.length} 'Good' condition records for update.`,
+                severity: "info",
+              });
+
+              // Continue to popup after short delay
+              setTimeout(() => {
+                setSelectedRowsData(goodRows);
+                setOpenPopup(true);
+              }, 100);
+
+              return;
+            }
+
+            // ✅ Normal flow for existing selection
+            const rowsData = submittedRTOs.filter(r => selectedRows.includes(r.id));
+            setSelectedRowsData(rowsData);
+            setOpenPopup(true);
+          }}
+          sx={{ mt: 2 }}
         >
-          Update Inventory
-      </button>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
-    </Box>
-</div>
+          {selectedRows.length === 0
+            ? "Select Good Condition for Update"
+            : `Update Inventory (${selectedRows.length})`}
+        </Button>
+        )}
+
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+        </Snackbar>
+
+        <Dialog 
+          open={openPopup} 
+          onClose={() => handleClosePopup(true)} 
+          maxWidth="lg" 
+          fullWidth
+          
+        >
+          <DialogTitle>Confirm Inventory Update</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              You are about to update inventory for <strong>{selectedRowsData.length}</strong> item(s).
+            </Typography>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+              Please confirm the selected RTOs below before updating inventory.
+            </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>S.N.</TableCell>
+                  <TableCell>Marketplace</TableCell>
+                  <TableCell>Pickup Partner</TableCell>
+                  <TableCell>AWB ID</TableCell>
+                  <TableCell>SKU Code</TableCell>
+                  <TableCell>Product Title</TableCell>
+                  <TableCell>Return Qty</TableCell>
+                  <TableCell>Condition</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {selectedRowsData.map((row, index) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.marketplaces}</TableCell>
+                    <TableCell>{row.pickup_partner}</TableCell>
+                    <TableCell>{row.awb_id}</TableCell>
+                    <TableCell>{row.sku_code}</TableCell>
+                    <TableCell>{row.product_title}</TableCell>
+                    <TableCell>{row.return_qty}</TableCell>
+                    <TableCell>{row.item_condition}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => handleClosePopup(true)} disabled={updating}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={updating}
+              startIcon={updating && <CircularProgress size={18} color="inherit" />}
+              onClick={async () => {
+                setUpdating(true);
+                try {
+                  const res = await axios.post(
+                    `${API_URL}/api/update-from-rto-multiple`,
+                    { selectedIds: selectedRows },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+
+                  setSnackbar({
+                    open: true,
+                    message: res.data.message || "Inventory updated successfully",
+                    severity: "success",
+                  });
+
+                  setSubmittedRTOs(prev => prev.filter(r => !selectedRows.includes(r.id)));
+
+                  setOpenPopup(false);
+                  fetchSubmittedRTOs();
+                } catch (err) {
+                  console.error("Inventory update error:", err);
+                  setSnackbar({
+                    open: true,
+                    message: err.response?.data?.message || "Failed to update inventory",
+                    severity: "error",
+                  });
+                } finally {
+                  setUpdating(false);
+                }
+              }}
+            >
+              {updating ? "Processing..." : "Confirm Update"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+      </Box>
+  </div>
   );
 };
 

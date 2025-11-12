@@ -31,12 +31,6 @@ const Sidebar = () => {
       );
     }
 
-    if (role === "superadmin") {
-      menuItems.push(
-        { name: "All Users", path: "/all-users", icon: <FaUsers /> }
-      );
-    }
-
     if (role === "superadmin" || role === "admin") {
       menuItems.push(
         {name: "Upload RTO Data", path: "/all-marketplaces", icon: <FaCloudUploadAlt  /> }
@@ -52,6 +46,12 @@ const Sidebar = () => {
     if (role === "superadmin" || role === "admin") {
       menuItems.push(
         {name: "Inventory Update History", path: "/inventory-update-history", icon: <FaCloudUploadAlt  />}
+      );
+    }
+
+    if (role === "superadmin") {
+      menuItems.push(
+        { name: "All Users", path: "/all-users", icon: <FaUsers /> }
       );
     }
 

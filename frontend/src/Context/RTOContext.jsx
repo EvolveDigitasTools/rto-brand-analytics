@@ -184,6 +184,7 @@ export const RTOProvider = ({ children }) => {
         login, 
         logout, 
         submittedRTOs, 
+        setSubmittedRTOs,
         submitRTO, 
         fetchSubmittedRTOs,
         loading, 

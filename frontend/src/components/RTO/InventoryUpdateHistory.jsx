@@ -22,9 +22,13 @@ const InventoryUpdateHistory = () => {
   const columns = [
     { field: "id", headerName: "S.No", width: 70 },
     { field: "sku", headerName: "SKU", width: 150 },
-    { field: "effectiveQty", headerName: "Added Qty", width: 120 },
+    { field: "sku_title", headerName: "Title", width: 300 },    
+    { field: "effectiveQty", headerName: "Added Qty", width: 90 },
+    { field: "return_qty", headerName: "Return Qty", width: 90 },    
     { field: "awb_number", headerName: "AWB Number", width: 160 },
-    { field: "source", headerName: "Source", width: 120 },
+    { field: "order_number", headerName: "Order Number", width: 160 },
+    { field: "processed_by", headerName: "Processed By", width: 160 },        
+    { field: "source", headerName: "Source", width: 90 },
     { field: "updatedAt", headerName: "Updated At", width: 200 },
   ];
 

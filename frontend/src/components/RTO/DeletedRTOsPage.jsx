@@ -22,6 +22,7 @@ const formatDateTime = (dateString) => {
 
 const DeletedRTOsPage = () => {
   const [deletedRTOs, setDeletedRTOs] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const API_URL = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem("token");
@@ -146,6 +147,8 @@ const DeletedRTOsPage = () => {
         getRowId={(row) => row.id}
         pageSize={10}
         rowsPerPageOptions={[10, 20, 50]}
+        checkboxSelection
+        onRowSelectionModelChange={(ids) => setSelectedRows(ids)}
       />
       <Snackbar
         open={snackbar.open}
