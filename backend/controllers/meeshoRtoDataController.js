@@ -16,7 +16,7 @@ export const getRtoDataByAwb = async (req, res) => {
         order_number,
         DATE_FORMAT(CAST(dispatch_date AS CHAR), '%d-%m-%Y') AS dispatch_date,
         qty,
-        DATE_FORMAT(delivered_date, '%m-%d-%Y') AS return_date
+        DATE_FORMAT(delivered_date, '%d-%m-%Y') AS return_date
       FROM meesho_rto_data
       WHERE awb_number = ?`,
       [awbNumber]

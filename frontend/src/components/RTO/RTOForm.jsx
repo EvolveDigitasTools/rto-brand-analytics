@@ -57,6 +57,8 @@ const RTOForm = () => {
   // ✅ Single source of truth for all rows
   const [fields, setFields] = useState([
     {
+      pickupPartner: "",
+      returnDate: "",
       skuCode: "",
       productTitle: "",
       awbId: "",
@@ -80,8 +82,10 @@ const RTOForm = () => {
     setFields((prev) => [
       ...prev,
       {
-        skuCode: prev[0]?.skuCode || "",
-        productTitle: prev[0]?.productTitle || "",
+        pickupPartner: "",
+        returnDate: "",
+        skuCode: "",
+        productTitle: "",
         awbId: "",
         orderId: "",
         courier: "",
@@ -159,9 +163,15 @@ const fetchAwbData = async (awbId, index) => {
     const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
     const rto = res.data.data;
 
-    const formatDate = (dateString) => {
-      if (!dateString) return "";
-      return new Date(dateString).toISOString().split("T")[0];
+    // const formatDate = (dateString) => {
+    //   if (!dateString) return "";
+    //   return new Date(dateString).toISOString().split("T")[0];
+    // };
+
+    const toInputDate = (ddmmyyyy) => {
+      if (!ddmmyyyy) return "";
+      const [dd, mm, yyyy] = ddmmyyyy.split("-");
+      return `${yyyy}-${mm}-${dd}`; 
     };
 
     setFields((prev) => {
@@ -170,20 +180,21 @@ const fetchAwbData = async (awbId, index) => {
 
       updated[index] = {
         ...updated[index],
+        returnDate: toInputDate(rto.return_date),
         awbId,
         skuCode: rto.sku || "",
         productTitle: rto.product_name || "",
         courier: rto.courier_partner || "",
         orderId: rto.order_number || "",
-        orderDate: formatDate(rto.dispatch_date),
-        returnQty: rto.qty || "",
+        orderDate: toInputDate(rto.dispatch_date),
+        returnQty: rto.qty,
       };
       return updated;
     });
 
     if (rto.courier_partner) setPickupPartner(rto.courier_partner);
-    if (rto.return_created_date)
-    setReturnDate(formatDate(rto.return_created_date));
+    if (rto.dispatch_date) setReturnDate(toInputDate(rto.dispatch_date));
+    if (rto.return_date) setReturnDate(toInputDate(rto.return_date));
 
   } catch (err) {
     console.error("❌ Error fetching AWB:", err.response?.data || err.message);
