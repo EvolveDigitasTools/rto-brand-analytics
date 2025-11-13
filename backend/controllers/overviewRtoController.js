@@ -62,11 +62,32 @@ export const getRTOOverview = async (req, res) => {
       ORDER BY count DESC
     `);
 
-    // 10 Top 10 Major RTOs (same SKUs)
-    const [topRTOs] = await db.query(`
-      SELECT sku_code, product_title, COUNT(*) AS total
+    // 10 Highest Return Product of Meesho (same SKUs)
+    const [meeshoRTOs] = await db.query(`
+      SELECT marketplaces, sku_code, product_title, COUNT(*) AS total
       FROM rto_submissions
-      GROUP BY sku_code, product_title
+      WHERE marketplaces = 'Meesho'
+      GROUP BY marketplaces, sku_code, product_title
+      ORDER BY total DESC
+      LIMIT 10
+    `);
+
+    // 11. Highest Return Product of Amazon (same SKUs)
+    const [amazonRTOs] = await db.query(`
+      SELECT marketplaces, sku_code, product_title, COUNT(*) AS total
+      FROM rto_submissions
+      WHERE marketplaces = 'Amazon'
+      GROUP BY marketplaces, sku_code, product_title
+      ORDER BY total DESC
+      LIMIT 10
+    `);
+
+    // 12. Highest Return Product of Flipkart (same SKUs)
+    const [flipkartRTOs] = await db.query(`
+      SELECT marketplaces, sku_code, product_title, COUNT(*) AS total
+      FROM rto_submissions
+      WHERE marketplaces = 'Flipkart'
+      GROUP BY marketplaces, sku_code, product_title
       ORDER BY total DESC
       LIMIT 10
     `);
@@ -90,7 +111,9 @@ export const getRTOOverview = async (req, res) => {
       },
       bar: { labels: barLabels, counts: barCounts },
       doughnut: { labels: doughnutLabels, counts: doughnutCounts },
-      topRTOs
+      meeshoRTOs,
+      amazonRTOs,
+      flipkartRTOs,
     });
 
   } catch (error) {
