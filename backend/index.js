@@ -18,11 +18,32 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// const corsOptions = {
+//   origin: process.env.FRONTEND_URL || "https://rto.globalplugin.com",
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              
+//   allowedHeaders: ["Content-Type", "Authorization"],                 
+//   credentials: true
+// };
+
+// Allow Multiple Origins
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : [];
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "https://rto.globalplugin.com",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],              
-  allowedHeaders: ["Content-Type", "Authorization"],                 
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
+
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
