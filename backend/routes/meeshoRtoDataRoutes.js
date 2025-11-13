@@ -3,6 +3,6 @@ import { getRtoDataByAwb } from "../controllers/meeshoRtoDataController.js";
 
 const router = express.Router();
 
-router.get("/meesho-rto/:awbNumber", getRtoDataByAwb);
+router.get("/meesho-rto/:awbId", getRtoDataByAwb);
 
 export default router;

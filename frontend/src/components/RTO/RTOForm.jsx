@@ -57,6 +57,7 @@ const RTOForm = () => {
   // ✅ Single source of truth for all rows
   const [fields, setFields] = useState([
     {
+      marketplaces: "",
       pickupPartner: "",
       returnDate: "",
       skuCode: "",
@@ -64,7 +65,6 @@ const RTOForm = () => {
       awbId: "",
       orderId: "",
       orderDate: "",
-      courier: "",
       returnQty: "",
       itemCondition: "",
       claimRaised: "",
@@ -73,27 +73,24 @@ const RTOForm = () => {
     },
   ]);
 
-  const [pickupPartner, setPickupPartner] = useState("");
-  const [returnDate, setReturnDate] = useState("");
-  const [allMarketPlaces, setAllMarketPlaces] = useState("");
-
-  // ✅ Add new row, copy first row's SKU/productTitle if available
   const addField = () => {
     setFields((prev) => [
       ...prev,
       {
+        marketplaces: "",
         pickupPartner: "",
         returnDate: "",
         skuCode: "",
         productTitle: "",
         awbId: "",
         orderId: "",
-        courier: "",
+        orderDate: "",
         returnQty: "",
         itemCondition: "",
         claimRaised: "",
-        ticketId: ""
-      }
+        ticketId: "",
+        comments: "",
+      },
     ]);
   };
 
@@ -128,7 +125,6 @@ const RTOForm = () => {
 
       const updatedFields = [...prevFields];
 
-      // ✅ For both normal and combo SKUs, use data.sku.name
       const title = res.data.success ? res.data.data.sku?.name || "" : "";
 
       updatedFields[index] = {
@@ -157,102 +153,83 @@ const RTOForm = () => {
 
 // Fetch Data with Awb id
 const fetchAwbData = async (awbId, index) => {
-  if (!awbId) return;
+    if (!awbId) return;
 
-  try {
-    const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
-    const rto = res.data.data;
+    try {
+      const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
+      const rto = res.data.data;
 
-    // const formatDate = (dateString) => {
-    //   if (!dateString) return "";
-    //   return new Date(dateString).toISOString().split("T")[0];
-    // };
-
-    const toInputDate = (ddmmyyyy) => {
-      if (!ddmmyyyy) return "";
-      const [dd, mm, yyyy] = ddmmyyyy.split("-");
-      return `${yyyy}-${mm}-${dd}`; 
-    };
-
-    setFields((prev) => {
-      const updated = [...prev];
-      if (!updated[index]) return prev;
-
-      updated[index] = {
-        ...updated[index],
-        returnDate: toInputDate(rto.return_date),
-        awbId,
-        skuCode: rto.sku || "",
-        productTitle: rto.product_name || "",
-        courier: rto.courier_partner || "",
-        orderId: rto.order_number || "",
-        orderDate: toInputDate(rto.dispatch_date),
-        returnQty: rto.qty,
+      const toInputDate = (ddmmyyyy) => {
+        if (!ddmmyyyy) return "";
+        const [dd, mm, yyyy] = ddmmyyyy.split("-");
+        return `${yyyy}-${mm}-${dd}`;
       };
-      return updated;
-    });
 
-    if (rto.courier_partner) setPickupPartner(rto.courier_partner);
-    if (rto.dispatch_date) setReturnDate(toInputDate(rto.dispatch_date));
-    if (rto.return_date) setReturnDate(toInputDate(rto.return_date));
-
-  } catch (err) {
-    console.error("❌ Error fetching AWB:", err.response?.data || err.message);
-  }
-};
+      // SINGLE CLEAN UPDATE
+      setFields((prev) => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          marketplaces: "Meesho",
+          pickupPartner: rto.courier_partner || "",
+          returnDate: toInputDate(rto.return_date),
+          awbId,
+          skuCode: rto.sku || "",
+          productTitle: rto.product_name || "",
+          orderId: rto.order_number || "",
+          orderDate: toInputDate(rto.dispatch_date),
+          returnQty: rto.qty,
+        };
+        return updated;
+      });
+    } catch (err) {
+      console.error("AWB Fetch Error:", err);
+    }
+  };
 
   // ✅ Submit form
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("No token found — user may not be logged in");
-    return;
-  }
-  // console.log("🔑 API URL:", API_URL);
-  // console.log("🔑 Token:", token ? token.slice(0, 30) + "..." : "MISSING");
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  try {
-    const res = await axios.post(`${API_URL}/api/rto`, {
-      marketplaces: allMarketPlaces,
-      pickupPartner,
-      returnDate: new Date().toISOString().split("T")[0],
-      fields,
-      }, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      }
-    });
+    try {
+      await axios.post(
+        `${API_URL}/api/rto`,
+        { fields },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    console.log("✅ Response:", res.data);
+      setOpenSnackbar(true);
 
-    setOpenSnackbar(true);
-    // Reset form
-    setPickupPartner("");
-    setAllMarketPlaces("");
-    setFields([{ 
-      returnDate: "",
-      skuCode: "", 
-      productTitle: "", 
-      awbId: "", 
-      orderId: "", 
-      orderDate: "", 
-      courier: "", 
-      itemCondition: "", 
-      claimRaised: "", 
-      ticketId: "",
-      comments: "", 
-      returnQty: "" }]);
-  } catch (err) {
-    console.error("Error submitting RTO:", err);
-    console.error("Response:", err.response?.data);
-    console.error("Status:", err.response?.status);
-    console.error("Request URL:", err.config?.url);
-    console.error("Request Headers:", err.config?.headers);
-  }
-};
+      // Reset form
+      setFields([
+        {
+          marketplaces: "",
+          pickupPartner: "",
+          returnDate: "",
+          skuCode: "",
+          productTitle: "",
+          awbId: "",
+          orderId: "",
+          orderDate: "",
+          itemCondition: "",
+          claimRaised: "",
+          ticketId: "",
+          comments: "",
+          returnQty: "",
+        },
+      ]);
+    } catch (err) {
+      console.error("Submit Error:", err);
+    }
+  };
 
   // ✅ Auto-total return quantity
   const totalReturn = fields.reduce((acc, field) => {
@@ -262,54 +239,67 @@ const fetchAwbData = async (awbId, index) => {
 
   return (
     <div className="rto_form_stylin">
-    <MainContainer component="form" onSubmit={handleSubmit}>
-      {/* MarketPlaces + Pickup Partner + Return Date */}
-      <FieldContainer>
-        <TextField
-          style={{ width: "32%" }}
-          select
-          label="Marketplaces"
-          value={allMarketPlaces}
-          onChange={(e) => setAllMarketPlaces(e.target.value)}
-          required
-        >
-          <MenuItem value="">-- Select Marketplaces --</MenuItem>
-          {marketPlaces.map((marketPlace, i) => (
-            <MenuItem key={i} value={marketPlace}>{marketPlace}</MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          style={{ width: "35%" }}
-          select
-          label="Pickup Partner"
-          value={pickupPartner}
-          onChange={(e) => setPickupPartner(e.target.value)}
-          required
-        >
-          <MenuItem value="">-- Select Courier --</MenuItem>
-          {couriers.map((courier, i) => (
-            <MenuItem key={i} value={courier}>{courier}</MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          style={{ width: "35%" }}
-          type="date"
-          label="Return Date"
-          variant="outlined"
-          value={returnDate}
-          onChange={(e) => setReturnDate(e.target.value)}
-          required
-          InputLabelProps={{ shrink: true }}
-        />
-      </FieldContainer>
-
+      <MainContainer component="form" onSubmit={handleSubmit}>
+    
       {/* Row Mapping */}
       {fields.map((field, index) => {
         const requiresClaim = ["Damaged", "Missing", "Wrong Return", "Used"].includes(field.itemCondition);
 
         return (
-          <FieldContainer style={{ display: "grid" }} key={index}>
+            <FieldContainer style={{ display: "grid" }} key={index}>
+              {/* MARKETPLACE + PICKUP PARTNER + RETURN DATE */}
+              <FieldContainer>
+                <TextField
+                  style={{ width: "30%" }}
+                  select
+                  label="Marketplaces"
+                  value={field.marketplaces}
+                  onChange={(e) =>
+                    handleChange(index, "marketplaces", e.target.value)
+                  }
+                  required
+                >
+                  <MenuItem value="">
+                    -- Select Marketplaces --
+                  </MenuItem>
+                  {marketPlaces.map((marketPlace, i) => (
+                    <MenuItem key={i} value={marketPlace}>
+                      {marketPlace}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  style={{ width: "34%" }}
+                  select
+                  label="Pickup Partner"
+                  value={field.pickupPartner}
+                  onChange={(e) =>
+                    handleChange(index, "pickupPartner", e.target.value)
+                  }
+                  required
+                >
+                  <MenuItem value="">-- Select Courier --</MenuItem>
+                  {couriers.map((courier, i) => (
+                    <MenuItem key={i} value={courier}>
+                      {courier}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  style={{ width: "34%" }}
+                  type="date"
+                  label="Return Date"
+                  value={field.returnDate}
+                  onChange={(e) =>
+                    handleChange(index, "returnDate", e.target.value)
+                  }
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              </FieldContainer>
+
             {/* SKU Code + Product Title */}
             <FieldContainer>
               <TextField
@@ -324,7 +314,7 @@ const fetchAwbData = async (awbId, index) => {
                     field.isValidSku && (
                       <InputAdornment position="end">
                         <CheckCircleIcon color="success" />
-                      </InputAdornment>
+                      </InputAdornment> 
                     ),
                 }}
               />
@@ -426,7 +416,7 @@ const fetchAwbData = async (awbId, index) => {
               variant="outlined"
               value={field.comments}
               onChange={(e) => handleChange(index, "comments", e.target.value)}
-              required
+              required={field.itemCondition !== "Good"}
             />
             <TextField
               style={{ width: "35%" }}

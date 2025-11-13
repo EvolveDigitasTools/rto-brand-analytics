@@ -1,9 +1,9 @@
 import db from "../db.js";
 
 export const getRtoDataByAwb = async (req, res) => {
-  const { awbNumber } = req.params;
+  const { awbId } = req.params;
 
-  if (!awbNumber) {
+  if (!awbId) {
     return res.status(400).json({ message: "AWB number is required" });
   }
 
@@ -19,7 +19,7 @@ export const getRtoDataByAwb = async (req, res) => {
         DATE_FORMAT(delivered_date, '%d-%m-%Y') AS return_date
       FROM meesho_rto_data
       WHERE awb_number = ?`,
-      [awbNumber]
+      [awbId]
     );
 
     if (results.length === 0) {
