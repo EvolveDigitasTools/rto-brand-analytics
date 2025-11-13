@@ -90,7 +90,7 @@ const Overview = () => {
 
   if (!data) return <h4 className="over-loading">Loading...</h4>;
 
-  const { cards, bar, topRTOs } = data;
+  const { cards, bar, meeshoRTOs, amazonRTOs, flipkartRTOs } = data;
   const totalCost = Number(cards?.totalCost) || 0;
 
   const cardList = [
@@ -222,23 +222,25 @@ const Overview = () => {
         </div>
       </div>
 
-      {/* === Table Section === */}
+      {/* === Meesho Table Section === */}
       <div className="top-rto-section">
-        <h3>Top 10 Return Products</h3>
+        <h3>Highest Return Products - Meesho</h3>
         <div className="table-wrapper">
           <table>
             <thead>
               <tr>
                 <th>S.N.</th>
-                <th>SKU Code</th>
+                <th>Marketplaces</th>
+                <th>SKU</th>
                 <th>Product Title</th>
-                <th>Total</th>
+                <th>Total Return Qty</th>
               </tr>
             </thead>
             <tbody>
-              {topRTOs.map((item, idx) => (
+              {meeshoRTOs.map((item, idx) => (
                 <tr key={idx}>
                   <td>{idx + 1}</td>
+                  <td>{item.marketplaces}</td>
                   <td>{item.sku_code}</td>
                   <td>{item.product_title}</td>
                   <td>{item.total}</td>
@@ -248,6 +250,69 @@ const Overview = () => {
           </table>
         </div>
       </div>
+
+      {/* === Amazon Table Section === */}
+      <div className="top-rto-section">
+        <h3>Highest Return Products - Amazon</h3>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>S.N.</th>
+                <th>Marketplaces</th>
+                <th>SKU</th>
+                <th>Product Title</th>
+                <th>Total Return Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {amazonRTOs.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
+                  <td>{item.marketplaces}</td>
+                  <td>{item.sku_code}</td>
+                  <td>{item.product_title}</td>
+                  <td>{item.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      {/* === Flipkart Table Section === */}
+      <div className="top-rto-section">
+        <h3>Highest Return Products - Flipkart</h3>
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>S.N.</th>
+                <th>Marketplaces</th>
+                <th>SKU</th>
+                <th>Product Title</th>
+                <th>Total Return Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {flipkartRTOs.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
+                  <td>{item.marketplaces}</td>
+                  <td>{item.sku_code}</td>
+                  <td>{item.product_title}</td>
+                  <td>{item.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+
+
     </div>
   );
 };

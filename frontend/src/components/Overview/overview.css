@@ -1,4 +1,7 @@
 .over-loading {
+  margin-left: -50px;
+  font-size: 20px;
+  font-weight: 500;
   display: flex;
   justify-content: center;
 }
@@ -69,6 +72,7 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   width: auto;
+  margin-bottom: 30px;
 }
 
 .top-rto-section h3 {

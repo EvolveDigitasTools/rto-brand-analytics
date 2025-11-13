@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers, FaCloudUploadAlt } from "react-icons/fa";
+import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers, FaCloudUploadAlt, FaHistory, FaSpinner  } from "react-icons/fa";
 import { AiOutlineFileDone } from "react-icons/ai";
 import { RTOContext } from "../../Context/RTOContext";
 import './Sidebar.css';
@@ -33,19 +33,25 @@ const Sidebar = () => {
 
     if (role === "superadmin" || role === "admin") {
       menuItems.push(
+        {name: "Pending Claim Raised", path: "/pending-claim-raised", icon: <FaSpinner />}
+      );
+    }
+
+    // if (role === "superadmin" || role === "admin") {
+    //   menuItems.push(
+    //     {name: "Good Condition RTOs", path: "/good-condition-rtos", icon: <FaCloudUploadAlt  />}
+    //   );
+    // }
+
+    if (role === "superadmin" || role === "admin") {
+      menuItems.push(
+        {name: "Inventory Update History", path: "/inventory-update-history", icon: <FaHistory />}
+      );
+    }
+
+    if (role === "superadmin" || role === "admin") {
+      menuItems.push(
         {name: "Upload RTO Data", path: "/all-marketplaces", icon: <FaCloudUploadAlt  /> }
-      );
-    }
-
-    if (role === "superadmin" || role === "admin") {
-      menuItems.push(
-        {name: "Good Condition RTOs", path: "/good-condition-rtos", icon: <FaCloudUploadAlt  />}
-      );
-    }
-
-    if (role === "superadmin" || role === "admin") {
-      menuItems.push(
-        {name: "Inventory Update History", path: "/inventory-update-history", icon: <FaCloudUploadAlt  />}
       );
     }
 
