@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { RTOContext } from "../../Context/RTOContext";
 import './AllUsers.css';
+import { FaUsers } from "react-icons/fa";
 
 <link
   rel="stylesheet"
@@ -161,7 +162,9 @@ const AllUsers = () => {
         <div className="all-users-container">
             
             <h2>
-                <span className="userr_icon"><i class="fa-solid fa-users"></i></span>
+                <span className="userr_icon">
+                    <FaUsers />
+                </span>
                 All Users
             </h2>
 

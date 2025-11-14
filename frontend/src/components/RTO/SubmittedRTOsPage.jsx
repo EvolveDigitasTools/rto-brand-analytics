@@ -52,6 +52,8 @@ const SubmittedRTOsPage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedRowsData, setSelectedRowsData] = useState([]);
+  const [notFoundPopupOpen, setNotFoundPopupOpen] = useState(false);
+  const [notFoundData, setNotFoundData] = useState([]);
   const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [isPolling, setIsPolling] = useState(false);
@@ -603,7 +605,6 @@ const SubmittedRTOsPage = () => {
         </Button>
         )}
 
-
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
@@ -676,11 +677,31 @@ const SubmittedRTOsPage = () => {
                     { headers: { Authorization: `Bearer ${token}` } }
                   );
 
-                  setSnackbar({
-                    open: true,
-                    message: res.data.message || "Inventory updated successfully",
-                    severity: "success",
-                  });
+                  // ✅ Handle success and missing SKU report
+                  if (res.data.success) {
+                    setSnackbar({
+                      open: true,
+                      message: res.data.message || "Inventory updated successfully",
+                      severity: "success",
+                    });
+
+                    // ✅ If some SKUs were not found, open missing SKUs popup
+                    if (res.data.notFoundSKUs && res.data.notFoundSKUs.length > 0) {
+                      setNotFoundData(res.data.notFoundSKUs);
+                      setNotFoundPopupOpen(true);
+                    }
+
+                    // ✅ Refresh data
+                    setSubmittedRTOs((prev) => prev.filter((r) => !selectedRows.includes(r.id)));
+                    setOpenPopup(false);
+                    fetchSubmittedRTOs();
+                  } else {
+                    setSnackbar({
+                      open: true,
+                      message: res.data.message || "Inventory update failed",
+                      severity: "error",
+                    });
+                  }
 
                   setSubmittedRTOs(prev => prev.filter(r => !selectedRows.includes(r.id)));
 
@@ -699,6 +720,58 @@ const SubmittedRTOsPage = () => {
               }}
             >
               {updating ? "Processing..." : "Confirm Update"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* ⚠️ Missing SKUs Popup */}
+        <Dialog
+          open={notFoundPopupOpen}
+          onClose={() => setNotFoundPopupOpen(false)}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle>Unmatched SKUs Found</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Some SKUs could not be matched in your database. Please review them below.
+            </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>S.N.</TableCell>
+                  <TableCell>RTO ID</TableCell>
+                  <TableCell>Marketplace</TableCell>
+                  <TableCell>Pickup Partner</TableCell>
+                  <TableCell>AWB ID</TableCell>
+                  <TableCell>SKU Code</TableCell>
+                  <TableCell>Base SKU</TableCell>
+                  <TableCell>Product Title</TableCell>
+                  <TableCell>Return Qty</TableCell>
+                  <TableCell>Reason</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {notFoundData.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.rto_id || row.id}</TableCell>
+                    <TableCell>{row.marketplaces}</TableCell>
+                    <TableCell>{row.pickup_partner}</TableCell>
+                    <TableCell>{row.awb_id}</TableCell>
+                    <TableCell>{row.sku_code}</TableCell>
+                    <TableCell>{row.baseSku || "-"}</TableCell>
+                    <TableCell>{row.product_title}</TableCell>
+                    <TableCell>{row.return_qty}</TableCell>
+                    <TableCell>{row.reason || "Not Found"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="contained" onClick={() => setNotFoundPopupOpen(false)}>
+              Close
             </Button>
           </DialogActions>
         </Dialog>

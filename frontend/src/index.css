@@ -117,6 +117,16 @@ button:hover .button-text {
   font-weight: 600;
 }
 
+.MuiDialogContent-root {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.MuiTableCell-root {
+  font-size: 0.9rem;
+}
+
+
 /* sanchit rto form css starts */
 
 .rto_form_stylin form.MuiBox-root.css-1th8btl {
