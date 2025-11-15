@@ -1,10 +1,10 @@
 import express from "express"
+import { authorize } from "../authRoutes.js";
 import { 
-    goodRtoData, 
-    updateInventoryFromRtoMultiple, 
-    inventoryUpdate 
-} from "../controllers/rto-to-masterInventory/rtoToMasterInventoryController.js";
-import { authorize } from "./authRoutes.js";
+    goodRtoData,
+    updateInventoryFromRtoMultiple,
+    inventoryUpdate
+ } from "../../controllers/rto-to-masterInventory/rtoToMasterInventoryController.js";
 
 const router = express.Router();
 

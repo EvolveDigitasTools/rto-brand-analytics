@@ -5,43 +5,51 @@ export const getRTODataRoleBased = async (req, res) => {
   try {
     db = await dbPromise;
 
-    let query = `
-      SELECT * FROM rto_submissions
-      WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
-      ORDER BY id DESC
-    `;
+    let query = "";
     let params = [];
 
     if (req.user.role === "user") {
-      // Regular user: only their own unprocessed RTOs
+      // Regular user: only their own unprocessed & unresolved RTOs
       query = `
         SELECT * FROM rto_submissions
         WHERE created_by = ?
           AND (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+          AND (is_claim_resolved IS NULL OR is_claim_resolved = FALSE)
         ORDER BY id DESC
       `;
       params = [req.user.email];
     } else if (req.user.role === "admin") {
-      // Admin: all unprocessed RTOs
+      // Admin: all unprocessed & unresolved RTOs
       query = `
         SELECT * FROM rto_submissions
-        WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+        WHERE 
+          (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+          AND (is_claim_resolved IS NULL OR is_claim_resolved = FALSE)
         ORDER BY id DESC
       `;
     } else if (req.user.role === "superadmin") {
-      // Superadmin: all unprocessed RTOs
+      // Superadmin: all unprocessed & unresolved RTOs
       query = `
         SELECT * FROM rto_submissions
-        WHERE (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+        WHERE 
+          (is_inventory_updated IS NULL OR is_inventory_updated = FALSE)
+          AND (is_claim_resolved IS NULL OR is_claim_resolved = FALSE)
         ORDER BY id DESC
       `;
     }
 
     const [rows] = await db.query(query, params);
-    res.json({ success: true, data: rows });
+
+    res.json({
+      success: true,
+      data: rows,
+    });
   } catch (error) {
-    console.error("Error fetching RTO data:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("❌ Error fetching RTO data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching RTO data",
+    });
   }
 };
 
