@@ -122,7 +122,7 @@ const InventoryUpdateHistory = () => {
           }}
         >
           <Typography variant="h5" fontWeight={600}>
-            Inventory Update History
+            Inventory Update History ({filteredRows.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

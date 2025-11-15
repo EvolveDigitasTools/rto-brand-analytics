@@ -14,7 +14,7 @@
 }
 
 .toggle-btn {  
-  background: rgba(224, 224, 224, 1);
+  background: #e6eaef;
   color: rgb(66, 65, 65);
   border: none;
   width: 100%;
@@ -45,7 +45,7 @@
 }
 
 .sidebar-menu a.active {
-  background-color: rgba(224, 224, 224, 1);
+  background-color: #e6eaef;
 }
 
 .sidebar-menu svg {

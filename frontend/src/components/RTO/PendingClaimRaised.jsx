@@ -209,7 +209,7 @@ const PendingClaimsPage = () => {
           }}
         >
           <Typography variant="h5" fontWeight={600}>
-            Pending Claim Raised RTOs
+            Pending Claim Raised RTOs ({filteredClaims.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

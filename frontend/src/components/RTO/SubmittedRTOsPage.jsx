@@ -289,7 +289,7 @@ const SubmittedRTOsPage = () => {
     {
       field: "awb_id",
       headerName: "AWB ID",
-      width: 130,
+      width: 150,
       renderCell: (params) =>
         editRowId === params.row.id ? (
           <TextField

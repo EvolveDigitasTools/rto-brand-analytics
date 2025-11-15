@@ -135,7 +135,7 @@ const ResolvedClaimsPage = () => {
           }}
         >
           <Typography variant="h5" fontWeight={600}>
-            Resolved Claim Raised RTOs
+            Resolved Claim Raised RTOs ({filteredClaims.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

@@ -183,7 +183,7 @@ const RTOForm = () => {
               ...updated[index],
               marketplaces: "Meesho",
               pickupPartner: rto.courier_partner || "",
-              returnDate: toInputDate(rto.return_created_date),
+              returnDate: toInputDate(rto.return_date),
               awbId,
               skuCode: rto.sku || "",
               productTitle: rto.product_name || "",
@@ -238,7 +238,7 @@ const RTOForm = () => {
             updated[index] = {
               ...updated[index],
               marketplaces: "Flipkart",
-              pickupPartner: rto.location_name || "",
+              pickupPartner: "Flipkart",
               returnDate: toInputDate(rto.return_approval_date),
               awbId: rto.tracking_id || awbId,
               skuCode: rto.sku || "",
@@ -249,7 +249,7 @@ const RTOForm = () => {
             };
             return updated;
           });
-          setOpenSnackbar(true);
+          setOpenSnackbar(false);
           return; // ✅ Found in Flipkart
         }
       } catch (_) {
