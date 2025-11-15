@@ -186,6 +186,7 @@ const Overview = () => {
           <div key={i} className="overview-card">
             <h4>{card.title}</h4>
             <h2>{card.value}</h2>
+            <div className="mini-line"></div>
           </div>
         ))}
       </div>
@@ -210,19 +211,38 @@ const Overview = () => {
         </div>
 
         {/* === Doughnut Section === */}
-        <div className="doughnut-section">
+<div className="doughnut-section">
           <h3>RTOs by Created By</h3>
-          <h4>Total Users: {totalUsers}</h4>
-          <h4>Total RTOs: {totalRTOs}</h4>
-          <div className="overview-chart">
-            {doughnutData && doughnutData.labels.length > 0 ? (
-              <div style={{ width: "400px", margin: "auto" }}>
-                <Doughnut data={doughnutData} />
-              </div>
-            ) : (
-              <p>Loading chart data...</p>
-            )}
+          <div className="donutt-div-main">
+          
+        <div
+          className="overview-chart"
+          style={{
+            width: "100%",               // full responsive width
+            maxWidth: "450px",           // optional max
+            height: "auto",
+            margin: "0 auto",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          {doughnutData && doughnutData.labels.length > 0 ? (
+            <Doughnut
+              data={doughnutData}
+              style={{ width: "100%", height: "100%" }}
+            />
+          ) : (
+            <p>Loading chart data...</p>
+          )}
+        </div>
+
+
+          <div class="card">
+     <h4 className="card__title">Total Users: {totalUsers}</h4>
+     <h4 className="card__title">Total RTOs: {totalRTOs}</h4>
+</div>
           </div>
+
         </div>
       </div>
 

@@ -170,7 +170,7 @@ const fetchAwbData = async (awbId, index) => {
         const updated = [...prev];
         updated[index] = {
           ...updated[index],
-          marketplaces: "Meesho",
+          marketplaces: "",
           pickupPartner: rto.courier_partner || "",
           returnDate: toInputDate(rto.return_date),
           awbId,

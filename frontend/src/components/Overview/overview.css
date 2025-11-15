@@ -155,3 +155,327 @@
   width: 300px;
   margin: 0 auto;
 }
+
+/* Sanchit Css Start */
+
+.card {
+    display: inline-flex;
+    gap: 40px;
+        padding-top: 30px;
+}
+
+
+ 
+      /* .wheel {
+        transform-origin: center;
+        animation: rotateWheel 1s linear infinite;
+      }
+      @keyframes rotateWheel {
+        100% { transform: rotate(360deg); }
+      }
+
+     
+      .bike-body {
+        animation: bikeMove 1.2s ease-in-out infinite alternate;
+      }
+      @keyframes bikeMove {
+        0% { transform: translateX(0px); }
+        100% { transform: translateX(4px); }
+      }
+     */
+
+     /* Wrapper so nth-child targets the right elements */
+
+
+.overview-cards .overview-card:nth-child(1) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(2) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(3) {
+     background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(4) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(5) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(6) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+.overview-cards .overview-card:nth-child(7) {
+      background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
+}
+
+
+
+.submitt_rto {
+    background: #75bfb0 !important;
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 6px 6px 6px #cbced1, -6px -6px 6px #fff !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    transition: .3s !important;
+    padding: 15px 30px !important;
+    }
+
+
+.submitt_rto:hover {
+    background-color: #606060 !important;
+    color: #fff !important;
+    transform: translateY(-2px) !important;
+    }
+
+
+
+    /* line chart using css only */
+
+  
+/* MINI LINE BASE */
+.mini-line {
+  width: 100%;
+      height: 30px;
+    background-repeat: repeat-x;
+    background-size: 80px 30px;
+}
+/* COMMON LINE STYLE */
+.overview-card .mini-line::before {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  border-radius: 10px;
+}
+
+.mini-line::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: 40px 12px;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+  background-image:
+    radial-gradient(circle at 20px 12px, currentColor 12px, transparent 13px),
+    radial-gradient(circle at 0px 0px, currentColor 12px, transparent 13px);
+}
+
+.card::before,
+.dashboard-card::before,
+.rank-card::before,
+.overview-card::before {
+  background: none !important;
+  animation: none !important;
+  width: 0 !important;
+}
+
+.card:hover,
+.dashboard-card:hover,
+.rank-card:hover,
+.overview-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+
+.overview-card:nth-child(1) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 12 Q 20 0, 40 12 T 80 12' stroke='%234a5d73' stroke-width='3' fill='none'/></svg>");
+}
+
+.overview-card:nth-child(2) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 9 Q 10 0, 20 9 T 40 9 T 60 9 T 80 9' stroke='%2300b96b' stroke-width='3' fill='none'/></svg>");
+}
+
+.overview-card:nth-child(3) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 9 C 15 0, 65 18, 80 9' stroke='%236f42c1' stroke-width='3' fill='none'/></svg>");
+}
+
+/* CARD 4 - Zigzag Wave */
+.overview-card:nth-child(4) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 6 L 20 12 L 40 6 L 60 12 L 80 6' stroke='%23ff8a65' stroke-width='3' fill='none'/></svg>");
+}
+
+/* CARD 5 - High Peak Wave */
+.overview-card:nth-child(5) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 14 Q 20 0, 40 14 T 80 14' stroke='%23ffca28' stroke-width='3' fill='none'/></svg>");
+}
+
+/* CARD 6 - Sine Wave */
+.overview-card:nth-child(6) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 9 C 10 0, 30 18, 40 9 S 70 0, 80 9' stroke='%2326a69a' stroke-width='3' fill='none'/></svg>");
+}
+
+/* CARD 7 - Soft Curvy Wave */
+.overview-card:nth-child(7) .mini-line {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 18'><path d='M0 10 Q 20 4, 40 10 T 80 10' stroke='%23ff5252' stroke-width='3' fill='none'/></svg>");
+}
+
+/* ensure visibility and vertical centering */
+.overview-card .mini-line {
+  display: block;
+  vertical-align: middle;
+}
+
+/* COLORS BY CARD — FIXED SELECTORS */
+.overview-card:nth-child(1) .mini-line::before { background: #4a5d73 !important; }
+.overview-card:nth-child(2) .mini-line::before { background: #00b96b !important; }
+.overview-card:nth-child(3) .mini-line::before { background: #6f42c1 !important; }
+.overview-card:nth-child(4) .mini-line::before { background: #ff8a65 !important; }
+.overview-card:nth-child(5) .mini-line::before { background: #ffca28 !important; }
+.overview-card:nth-child(6) .mini-line::before { background: #26a69a !important; }
+.overview-card:nth-child(7) .mini-line::before { background:#424141 !important }
+
+/* allow curves + visibility */
+.overview-card {
+  overflow: visible !important;
+}
+
+
+/* remove the clipping issue */
+.card .content {
+  overflow: visible !important;
+}
+
+
+
+/* overview table platform wise */
+
+/* WRAPPER */
+.main_overview_tablee .top-rto-section {
+  margin-bottom: 40px;
+}
+
+.main_overview_tablee .top-rto-section h3 {
+  margin-bottom: 15px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* TABLE WRAPPER */
+.main_overview_tablee .table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #ffffff;
+  padding: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* TABLE */
+.main_overview_tablee .table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Inter", sans-serif;
+}
+
+/* HEADER */
+.main_overview_tablee .table-wrapper thead tr {
+  background: #4f9c8f;
+  color: #fff;
+}
+
+.main_overview_tablee .table-wrapper th {
+  padding: 12px 15px;
+  font-weight: 600;
+  text-align: left;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.main_overview_tablee .table-wrapper thead tr th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.main_overview_tablee .table-wrapper thead tr th:last-child {
+  border-top-right-radius: 10px;
+}
+
+/* ROWS */
+.main_overview_tablee .table-wrapper tbody tr {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  transition: 0.2s ease;
+}
+
+.main_overview_tablee .table-wrapper tbody tr:nth-child(even) {
+  background: #f8f8f8; /* light grey alternate row */
+}
+
+.main_overview_tablee .table-wrapper tbody tr:hover {
+  background: #eef8f5; /* soft mint hover like sample image */
+}
+
+/* CELLS */
+.main_overview_tablee .table-wrapper td {
+  padding: 12px 15px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Smooth corners bottom (optional) */
+.main_overview_tablee .table-wrapper tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.main_overview_tablee .table-wrapper tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+.main_overview_tablee .table-wrapper table,
+.main_overview_tablee .table-wrapper th,
+.main_overview_tablee .table-wrapper td {
+  border: 1px solid #dcdcdc;
+}
+
+.main_overview_tablee .table-wrapper table {
+  border-collapse: collapse;
+}
+
+.main_overview_tablee .table-wrapper th,
+.main_overview_tablee .table-wrapper td {
+  padding: 12px 15px;
+}
+
+/* donut chart css - sanchit */
+
