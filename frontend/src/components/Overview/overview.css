@@ -42,17 +42,28 @@
   display: flex;
   gap: 20px;
   align-items: flex-start;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 .chart-section {
-  flex: 1;
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+ flex: 1;
   width: 50%;
+  float: left;
+    padding: 1.5rem;
+        background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s ease-in-out;
 }
+
+.overview-chart canvas {
+    height: 335px !important; 
+}
+
+.overview-chart {
+    max-width: 520px !important; 
+}
+
 
 .total-rto-text {
   font-size: 2rem;
@@ -66,11 +77,13 @@
 }
 
 .top-rto-section {
-  flex: 1;
-  background: #fff;
+ flex: 1;
+  
   padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s ease-in-out;
   width: auto;
   margin-bottom: 30px;
 }
@@ -98,7 +111,7 @@
 }
 
 .table-wrapper {
-  max-height: 420px;       
+  max-height: auto;       
   overflow-y: hidden;         
   overflow-x: hidden;
   margin-top: 15px;
@@ -141,11 +154,14 @@
 }
 
 .doughnut-section {
-  background: #fff;
+  height: 485px;
   flex: 1;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+       background: #fff;
+    border-radius: 15px;
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 30px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+    transition: all .3s 
+ease-in-out;
   margin-bottom: 25px;
   text-align: center;
   width: 50%;
@@ -156,13 +172,14 @@
   margin: 0 auto;
 }
 
-/* Sanchit Css Start */
-
 .card {
     display: inline-flex;
     gap: 40px;
         padding-top: 30px;
 }
+
+/* Sanchit Css Start */
+
 
 
  

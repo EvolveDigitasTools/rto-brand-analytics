@@ -178,6 +178,28 @@ const Overview = () => {
     },
   };
 
+   const options = {
+     maintainAspectRatio: false,
+responsive: true,
+  plugins: {
+    legend: {
+      display: true,
+      position: "left",   // 👈 moves legend to the left
+      labels: {
+        usePointStyle: true,
+        pointStyle: "rectRounded",
+        padding: 20,
+        font: {
+          size: 14
+        }
+      }
+    }
+  },
+ 
+
+};
+
+
   return (
     <div className="rto-overview">
       {/* === Cards Section === */}
@@ -245,7 +267,8 @@ const Overview = () => {
 
         </div>
       </div>
-
+      
+<div className="main_overview_tablee">
       {/* === Meesho Table Section === */}
       <div className="top-rto-section">
         <h3>Highest Return Products - Meesho</h3>
@@ -337,6 +360,7 @@ const Overview = () => {
 
 
 
+    </div>
     </div>
   );
 };

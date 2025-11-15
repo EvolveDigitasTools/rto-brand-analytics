@@ -41,6 +41,11 @@ const RTOForm = () => {
   // const navigate = useNavigate();
   const [openSnackbar, setOpenSnackbar] = useState(false);
   // const { submitRTO } = useContext(RTOContext);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   const marketPlaces = [
     "Amazon", "Flipkart", "Meesho", "FirstCry", "Pluugin Store"
@@ -152,38 +157,118 @@ const RTOForm = () => {
 };
 
 // Fetch Data with Awb id
-const fetchAwbData = async (awbId, index) => {
+  const fetchAwbData = async (awbId, index) => {
     if (!awbId) return;
 
     try {
-      const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
-      const rto = res.data.data;
-
-      const toInputDate = (ddmmyyyy) => {
-        if (!ddmmyyyy) return "";
-        const [dd, mm, yyyy] = ddmmyyyy.split("-");
-        return `${yyyy}-${mm}-${dd}`;
+      const toInputDate = (val) => {
+        if (!val) return "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val; // yyyy-mm-dd
+        if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
+          const [dd, mm, yyyy] = val.split("-");
+          return `${yyyy}-${mm}-${dd}`;
+        }
+        const d = new Date(val);
+        return isNaN(d) ? "" : d.toISOString().split("T")[0];
       };
 
-      // SINGLE CLEAN UPDATE
-      setFields((prev) => {
-        const updated = [...prev];
-        updated[index] = {
-          ...updated[index],
-          marketplaces: "",
-          pickupPartner: rto.courier_partner || "",
-          returnDate: toInputDate(rto.return_date),
-          awbId,
-          skuCode: rto.sku || "",
-          productTitle: rto.product_name || "",
-          orderId: rto.order_number || "",
-          orderDate: toInputDate(rto.dispatch_date),
-          returnQty: rto.qty,
-        };
-        return updated;
+      // 🔹 1️⃣ Try Meesho first
+      try {
+        const res = await axios.get(`${API_URL}/api/meesho-rto/${awbId}`);
+        const rto = res.data?.data;
+        if (rto) {
+          setFields((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              marketplaces: "Meesho",
+              pickupPartner: rto.courier_partner || "",
+              returnDate: toInputDate(rto.return_created_date),
+              awbId,
+              skuCode: rto.sku || "",
+              productTitle: rto.product_name || "",
+              orderId: rto.order_number || "",
+              orderDate: toInputDate(rto.dispatch_date),
+              returnQty: rto.qty || "",
+            };
+            return updated;
+          });
+          setOpenSnackbar(true);
+          return; // ✅ Found in Meesho
+        }
+      } catch (_) {
+        // ignore Meesho 404s
+      }
+
+      // 🔹 2️⃣ Try Amazon next
+      try {
+        const res = await axios.get(`${API_URL}/api/amazon-rto/${awbId}`);
+        const rto = res.data?.data;
+        if (rto) {
+          setFields((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              marketplaces: "Amazon",
+              pickupPartner: rto.return_carrier || "",
+              returnDate: toInputDate(rto.return_delivery_date),
+              awbId,
+              skuCode: rto.merchant_sku || "",
+              productTitle: rto.item_name || "",
+              orderId: rto.order_id || "",
+              orderDate: toInputDate(rto.order_date),
+              returnQty: rto.return_quantity || "",
+            };
+            return updated;
+          });
+          setOpenSnackbar(true);
+          return; // ✅ Found in Amazon
+        }
+      } catch (_) {
+        // ignore Amazon 404s
+      }
+
+      // 🔹 3️⃣ Try Flipkart finally
+      try {
+        const res = await axios.get(`${API_URL}/api/flipkart-rto/${awbId}`);
+        const rto = res.data?.data;
+        if (rto) {
+          setFields((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              marketplaces: "Flipkart",
+              pickupPartner: rto.location_name || "",
+              returnDate: toInputDate(rto.return_approval_date),
+              awbId: rto.tracking_id || awbId,
+              skuCode: rto.sku || "",
+              productTitle: rto.product || "",
+              orderId: rto.order_id || "",
+              orderDate: toInputDate(rto.out_for_delivery_date),
+              returnQty: rto.quantity || "",
+            };
+            return updated;
+          });
+          setOpenSnackbar(true);
+          return; // ✅ Found in Flipkart
+        }
+      } catch (_) {
+        // ignore Flipkart 404s
+      }
+
+      // 🔹 Not found anywhere
+      setSnackbar({
+        open: true,
+        message: "AWB/Order ID not found in Meesho, Amazon, or Flipkart records.",
+        severity: "warning",
       });
     } catch (err) {
       console.error("AWB Fetch Error:", err);
+      setSnackbar({
+        open: true,
+        message: "Error fetching AWB/Order ID data.",
+        severity: "error",
+      });
     }
   };
 
