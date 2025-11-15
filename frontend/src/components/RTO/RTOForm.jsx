@@ -47,7 +47,7 @@ const RTOForm = () => {
   ]
 
   const couriers = [
-    "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpressbees",
+    "Delhivery", "Blue Dart", "Valmo", "Shadowfax", "Xpress Bees",
     "Amazon", "Flipkart", "Tata 1mg", "Hyugai Life", "Nimbus",
     "DTDC", "Meolaa"
   ];

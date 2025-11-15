@@ -16,6 +16,9 @@ import Flipkart from "./components/RTO/UploadRTOData/Flipkart";
 import Meesho from "./components/RTO/UploadRTOData/Meesho";
 import GoodConditionRtoPage from "./components/RTO/GoodConditionRtoPage";
 import InventoryUpdateHistory from "./components/RTO/InventoryUpdateHistory";
+import PendingClaimsPage from "./components/RTO/PendingClaimRaised";
+import ResolvedClaimsPage from "./components/RTO/ResolvedClaimsPage";
+import GlobalClaimReminder from "./components/RTO/GlobalClaimReminder";
 
 function HomeRoute() {
   const { isAuthenticated } = useContext(RTOContext);
@@ -30,7 +33,13 @@ function App() {
           <Route path="/" element={<HomeRoute />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route element={<DashboardLayout />}>
+            <Route element={
+              <> 
+                <GlobalClaimReminder /> 
+                <DashboardLayout /> 
+              </>
+              } 
+            >
               <Route path="/rto-form" element={<RTOForm />} />
               <Route path="/submitted-rto" element={<SubmittedRTOsPage />} />
               <Route path="/deleted-rto" element={<DeletedRTOsPage />} />
@@ -41,7 +50,9 @@ function App() {
               <Route path="/flipkart" element={<Flipkart />} />
               <Route path="/meesho" element={<Meesho />} />
               <Route path="/good-condition-rtos" element={<GoodConditionRtoPage />} />
-              <Route path="/inventory-update-history" element={<InventoryUpdateHistory />} />                                                         
+              <Route path="/inventory-update-history" element={<InventoryUpdateHistory />} /> 
+              <Route path="/pending-claims" element={<PendingClaimsPage />} />
+              <Route path="/resolved-claims" element={<ResolvedClaimsPage />} />                                                        
             </Route>
           </Route>
         </Routes>

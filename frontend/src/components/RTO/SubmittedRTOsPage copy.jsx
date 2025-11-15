@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from "react";
-import {
-  Dialog, DialogTitle,
-  DialogContent, DialogActions,
-  Button, Typography, Table,
-  TableHead, TableRow, TableCell,
-  TableBody, Box, TextField,
-  IconButton, Snackbar,
-  Alert, MenuItem, CircularProgress,
-  Paper, Tooltip
+import { 
+  Dialog, DialogTitle, 
+  DialogContent, DialogActions, 
+  Button, Typography, Table, 
+  TableHead, TableRow, TableCell, 
+  TableBody, Box, TextField, 
+  IconButton, Snackbar, 
+  Alert, MenuItem, CircularProgress 
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { RTOContext } from "../../Context/RTOContext";
@@ -16,8 +15,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
-import SearchIcon from "@mui/icons-material/Search";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import axios from "axios";
 
 const PICKUP_PARTNERS = [
@@ -42,15 +39,14 @@ const formatDateTime = (dateString) => {
 };
 
 const SubmittedRTOsPage = () => {
-  const {
-    submittedRTOs,
-    setSubmittedRTOs,
-    loading, error,
-    fetchSubmittedRTOs,
-    isAuthenticated,
-    setIsAuthenticated
+  const { 
+    submittedRTOs, 
+    setSubmittedRTOs, 
+    loading, error, 
+    fetchSubmittedRTOs, 
+    isAuthenticated, 
+    setIsAuthenticated 
   } = useContext(RTOContext);
-
   const [editRowId, setEditRowId] = useState(null);
   const [editData, setEditData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
@@ -61,8 +57,6 @@ const SubmittedRTOsPage = () => {
   const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [isPolling, setIsPolling] = useState(false);
-  const [search, setSearch] = useState(""); // Search state
-  const [filteredRTOs, setFilteredRTOs] = useState([]); // Filtered data
   const prevRTOsRef = useRef(submittedRTOs);
   const API_URL = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem("token");
@@ -78,30 +72,16 @@ const SubmittedRTOsPage = () => {
   }, []);
 
   const userRole = user.role || localStorage.getItem("role") || "user";
+  // console.log("User role:", userRole);
 
-  // Search Filter Effect
+// Silent polling every 10 seconds for all authenticated users
   useEffect(() => {
-    if (!search.trim()) {
-      setFilteredRTOs(submittedRTOs);
-    } else {
-      const q = search.toLowerCase();
-      setFilteredRTOs(
-        submittedRTOs.filter(
-          (rto) =>
-            rto.marketplaces?.toLowerCase().includes(q) ||
-            rto.awb_id?.toLowerCase().includes(q) ||
-            rto.sku_code?.toLowerCase().includes(q) ||
-            rto.product_title?.toLowerCase().includes(q) ||
-            rto.ticket_id?.toLowerCase().includes(q)
-        )
-      );
+    if (!isAuthenticated || !token) {
+      // console.warn("Polling skipped: not authenticated or no token", { isAuthenticated, token });
+      return;
     }
-  }, [search, submittedRTOs]);
 
-  // Silent polling every 10 seconds
-  useEffect(() => {
-    if (!isAuthenticated || !token) return;
-
+    // console.log("Polling started for user:", user.email, "Role:", userRole, "API_URL:", API_URL);
     const interval = setInterval(async () => {
       setIsPolling(true);
       let retries = 3;
@@ -111,6 +91,7 @@ const SubmittedRTOsPage = () => {
             headers: { Authorization: `Bearer ${token}` },
             timeout: 5000,
           });
+          // console.log("Polling response:", res.data);
           if (res.data.success && Array.isArray(res.data.data)) {
             const newRows = res.data.data.filter(
               (row) => row && typeof row === "object" && row.hasOwnProperty("id")
@@ -118,14 +99,25 @@ const SubmittedRTOsPage = () => {
             const newIds = newRows.map(row => row.id).sort();
             const prevIds = prevRTOsRef.current.map(row => row.id).sort();
             if (newRows.length !== prevRTOsRef.current.length || JSON.stringify(newIds) !== JSON.stringify(prevIds)) {
+              // console.log("Updating RTO data:", newRows.length, "rows");
               setSubmittedRTOs(newRows);
               prevRTOsRef.current = newRows;
+            } else {
+              console.log("No new data to update");
             }
             break;
           } else {
+            // console.warn("Invalid polling response:", res.data);
             retries--;
           }
         } catch (err) {
+          // console.error("Polling error:", {
+          //   message: err.message,
+          //   code: err.code,
+          //   status: err.response?.status,
+          //   data: err.response?.data,
+          //   url: `${API_URL}/api/rto`,
+          // });
           if (err.response?.status === 401) {
             setIsAuthenticated(false);
             localStorage.removeItem("user");
@@ -133,11 +125,16 @@ const SubmittedRTOsPage = () => {
             localStorage.removeItem("isAuthenticated");
             break;
           } else if (err.response?.status === 403) {
+            // console.warn("Polling forbidden for user role:", userRole);
             break;
           }
           retries--;
-          if (retries === 0) break;
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (retries === 0) {
+            // console.error("Polling failed after retries");
+          } else {
+            // console.log(`Retrying polling (${retries} attempts left)...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
       }
       setIsPolling(false);
@@ -157,6 +154,7 @@ const SubmittedRTOsPage = () => {
   };
 
   const handleChange = (key, value) => {
+    // Trim text-based fields to prevent whitespace issues
     const trimmedValue = ["awb_id", "sku_code", "product_title", "order_id", "ticket_id", "comments"].includes(key)
       ? value.trim()
       : value;
@@ -166,12 +164,21 @@ const SubmittedRTOsPage = () => {
   const handleSave = async (id) => {
     if (!token) return alert("Not logged in");
 
+    // Validate awb_id
     if (!editData.awb_id || editData.awb_id.trim() === "") {
-      setSnackbar({ open: true, message: "AWB ID is required", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "AWB ID is required",
+        severity: "error",
+      });
       return;
     }
 
-    if (editData.item_condition !== "Good") {
+    // Validate claim_raised and ticket_id
+    if (editData.item_condition === "Good") {
+      editData.claim_raised = null;
+      editData.ticket_id = null;
+    } else {
       if (!editData.claim_raised || !editData.ticket_id) {
         setSnackbar({
           open: true,
@@ -180,9 +187,6 @@ const SubmittedRTOsPage = () => {
         });
         return;
       }
-    } else {
-      editData.claim_raised = null;
-      editData.ticket_id = null;
     }
 
     const payload = {
@@ -191,15 +195,20 @@ const SubmittedRTOsPage = () => {
       order_date: editData.order_date ? editData.order_date.split("T")[0] : null,
     };
 
+    console.log("Payload sent to backend:", payload);
+    console.log("AWB ID in payload:", payload.awb_id);
+
     try {
-      await axios.put(`${API_URL}/api/rto/${id}`, payload, {
+      const response = await axios.put(`${API_URL}/api/rto/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Backend response:", response.data);
       fetchSubmittedRTOs();
       setEditRowId(null);
       setEditData({});
       setSnackbar({ open: true, message: "RTO updated successfully", severity: "success" });
     } catch (err) {
+      console.error("Update error:", err.response?.data, err.response?.status);
       setSnackbar({
         open: true,
         message: err.response?.data?.message || "Failed to update record",
@@ -213,16 +222,19 @@ const SubmittedRTOsPage = () => {
     if (!window.confirm("Are you sure you want to delete this RTO record?")) return;
 
     try {
+      // 1️⃣ Find record to archive before deletion
       const recordToDelete = submittedRTOs.find((rto) => rto.id === id);
       if (!recordToDelete) {
         setSnackbar({ open: true, message: "Record not found", severity: "error" });
         return;
       }
 
+      // 2️⃣ Send record to backend 'deleted_rtos' table
       await axios.post(`${API_URL}/api/deleted-rtos`, recordToDelete, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // 3️⃣ Delete from main RTO table
       await axios.delete(`${API_URL}/api/rto/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -230,6 +242,7 @@ const SubmittedRTOsPage = () => {
       fetchSubmittedRTOs();
       setSnackbar({ open: true, message: "RTO deleted & archived successfully", severity: "success" });
     } catch (err) {
+      console.error("Delete error:", err);
       setSnackbar({ open: true, message: "Failed to delete record", severity: "error" });
     }
   };
@@ -240,10 +253,14 @@ const SubmittedRTOsPage = () => {
 
   const handleClosePopup = (resetSelection = false) => {
     setOpenPopup(false);
-    if (resetSelection) setSelectedRows([]);
+
+    if (resetSelection) {
+      setSelectedRows([]);
+    }
   };
 
   const columns = [
+    // { field: "id", headerName: "ID", width: 70 }, // Id same as DB
     {
       field: "serialNo",
       headerName: "S.No.",
@@ -256,7 +273,9 @@ const SubmittedRTOsPage = () => {
         const sortedRowIds = apiRef.getSortedRowIds() || [];
         const totalRows = sortedRowIds.length;
         const rowIndex = sortedRowIds.indexOf(params.id);
+        // console.log("SerialNo Debug:", { page, pageSize, rowIndex, id: params.id, totalRows, sortedRowIds });
         if (isNaN(page) || isNaN(pageSize) || rowIndex === -1 || isNaN(totalRows)) {
+          // console.warn("Invalid serial number calculation:", { page, pageSize, rowIndex, totalRows });
           return "-";
         }
         return totalRows - (page * pageSize + rowIndex);
@@ -279,7 +298,9 @@ const SubmittedRTOsPage = () => {
             fullWidth
           >
             {PICKUP_PARTNERS.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         ) : (
@@ -304,7 +325,12 @@ const SubmittedRTOsPage = () => {
           params.value
         ),
     },
-    { field: "return_date", headerName: "Return Date", width: 150, renderCell: (params) => formatDate(params.value) },
+    {
+      field: "return_date",
+      headerName: "Return Date",
+      width: 150,
+      renderCell: (params) => formatDate(params.value),
+    },
     {
       field: "sku_code",
       headerName: "SKU Code",
@@ -394,7 +420,9 @@ const SubmittedRTOsPage = () => {
             fullWidth
           >
             {ITEM_CONDITIONS.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         ) : (
@@ -461,7 +489,12 @@ const SubmittedRTOsPage = () => {
         ),
     },
     { field: "return_qty", headerName: "Return Qty", width: 120 },
-    { field: "created_at", headerName: "Created At", width: 180, renderCell: (params) => formatDateTime(params.value) },
+    {
+      field: "created_at",
+      headerName: "Created At",
+      width: 180,
+      renderCell: (params) => formatDateTime(params.value),
+    },
     { field: "created_by", headerName: "Created By", width: 150 },
     {
       field: "actions",
@@ -495,140 +528,83 @@ const SubmittedRTOsPage = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-        {/* Header with Count, Search & Refresh */}
-        <Box
-          sx={{
-            mb: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 2,
-          }}
-        >
-          <Typography variant="h5" fontWeight={600}>
-            Submitted RTOs ({filteredRTOs.length})
-          </Typography>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <TextField
-              size="small"
-              variant="outlined"
-              placeholder="Search by Marketplace, AWB, SKU, Product, Ticket ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              InputProps={{
-                startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
-              }}
-            />
-            <Tooltip title="Refresh">
-              <IconButton onClick={fetchSubmittedRTOs} color="primary">
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        {/* Data Table */}
-        {loading && !isPolling ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
-            <CircularProgress />
-          </Box>
-        ) : filteredRTOs.length === 0 ? (
-          <Typography sx={{ textAlign: "center", py: 5 }}>
-            No submitted RTOs found.
-          </Typography>
-        ) : (
-          <div style={{ height: 600, width: "100%" }}>
-            <DataGrid
-              rows={filteredRTOs}
-              columns={columns}
-              getRowId={(row) => row.id}
-              pageSize={10}
-              rowsPerPageOptions={[10, 20, 50]}
-              disableSelectionOnClick
-              checkboxSelection={["admin", "superadmin"].includes(userRole)}
-              loading={loading && !isPolling}
-              onRowSelectionModelChange={(selection) => {
+  <div className="submit_rto_tablee">
+      <Box sx={{ height: 575, padding: 3 }}>
+        {error && <Box sx={{ color: "red", mb: 2 }}>Error: {error}</Box>}
+        <DataGrid
+          rows={submittedRTOs}
+          columns={columns}
+          getRowId={(row) => row.id}
+          pageSize={10}
+          rowsPerPageOptions={[10, 20, 50]}
+          disableSelectionOnClick
+          checkboxSelection={["admin", "superadmin"].includes(userRole)}
+          loading={loading && !isPolling}
+          // onRowSelectionModelChange={(ids) => setSelectedRows(ids)}
+          onRowSelectionModelChange={(selection) => {
             if (!["admin", "superadmin"].includes(userRole)) return;
               setSelectedRows(Array.from(selection.ids || []))}
           }
-              onRowDoubleClick={(params) => {
-                setEditRowId(params.row.id);  
-                setEditData({ ...params.row });
-              }}
-              sx={{
-                backgroundColor: "#fff",
-                borderRadius: 2,
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#1976d2",
-                  color: "#000000ff",
-                  fontWeight: "bold",
-                },
-                "& .MuiDataGrid-row:hover": {
-                  backgroundColor: "#f5f5f5",
-                },
-              }}
-            />
-          </div>
-        )}
 
+          onRowDoubleClick={(params) => {
+            setEditRowId(params.row.id);
+            setEditData({ ...params.row });
+          }}
+        />
+        
         {/* Update Inventory Button */}
         {["admin", "superadmin"].includes(userRole) && (
-          <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={updating}
-                    startIcon={updating && <CircularProgress size={18} color="inherit" />}
-                    onClick={() => {
-                      if (selectedRows.length === 0) {
-                        // ✅ Select only rows with good condition
-                        const goodRows = submittedRTOs.filter(
-                          r => r.item_condition === "Good" || r["Item Condition"] === "Good"
-                        );
-                        const goodRowIds = goodRows.map(r => r.id);
-          
-                        if (goodRowIds.length === 0) {
-                          setSnackbar({
-                            open: true,
-                            message: "No 'Good' condition records available for update.",
-                            severity: "warning",
-                          });
-                          return;
-                        }
-          
-                        setSelectedRows(goodRowIds);
-                        setSnackbar({
-                          open: true,
-                          message: `Selected ${goodRowIds.length} 'Good' condition records for update.`,
-                          severity: "info",
-                        });
-          
-                        // Continue to popup after short delay
-                        setTimeout(() => {
-                          setSelectedRowsData(goodRows);
-                          setOpenPopup(true);
-                        }, 100);
-          
-                        return;
-                      }
-          
-                      // ✅ Normal flow for existing selection
-                      const rowsData = submittedRTOs.filter(r => selectedRows.includes(r.id));
-                      setSelectedRowsData(rowsData);
-                      setOpenPopup(true);
-                    }}
-                    sx={{ mt: 2 }}
-                  >
-                    {selectedRows.length === 0
-                      ? "Select Good Condition for Update"
-                      : `Update Inventory (${selectedRows.length})`}
-                  </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={updating}
+          startIcon={updating && <CircularProgress size={18} color="inherit" />}
+          onClick={() => {
+            if (selectedRows.length === 0) {
+              // ✅ Select only rows with good condition
+              const goodRows = submittedRTOs.filter(
+                r => r.item_condition === "Good" || r["Item Condition"] === "Good"
+              );
+              const goodRowIds = goodRows.map(r => r.id);
+
+              if (goodRowIds.length === 0) {
+                setSnackbar({
+                  open: true,
+                  message: "No 'Good' condition records available for update.",
+                  severity: "warning",
+                });
+                return;
+              }
+
+              setSelectedRows(goodRowIds);
+              setSnackbar({
+                open: true,
+                message: `Selected ${goodRowIds.length} 'Good' condition records for update.`,
+                severity: "info",
+              });
+
+              // Continue to popup after short delay
+              setTimeout(() => {
+                setSelectedRowsData(goodRows);
+                setOpenPopup(true);
+              }, 100);
+
+              return;
+            }
+
+            // ✅ Normal flow for existing selection
+            const rowsData = submittedRTOs.filter(r => selectedRows.includes(r.id));
+            setSelectedRowsData(rowsData);
+            setOpenPopup(true);
+          }}
+          sx={{ mt: 2 }}
+        >
+          {selectedRows.length === 0
+            ? "Select Good Condition for Update"
+            : `Update Inventory (${selectedRows.length})`}
+        </Button>
         )}
 
-        {/* Snackbars, Dialogs, etc. */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
@@ -638,8 +614,13 @@ const SubmittedRTOsPage = () => {
           <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
         </Snackbar>
 
-        {/* Confirm Inventory Update Dialog */}
-        <Dialog open={openPopup} onClose={() => handleClosePopup(true)} maxWidth="lg" fullWidth>
+        <Dialog 
+          open={openPopup} 
+          onClose={() => handleClosePopup(true)} 
+          maxWidth="lg" 
+          fullWidth
+          
+        >
           <DialogTitle>Confirm Inventory Update</DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ mb: 1 }}>
@@ -677,8 +658,11 @@ const SubmittedRTOsPage = () => {
               </TableBody>
             </Table>
           </DialogContent>
+
           <DialogActions>
-            <Button onClick={() => handleClosePopup(true)} disabled={updating}>Cancel</Button>
+            <Button onClick={() => handleClosePopup(true)} disabled={updating}>
+              Cancel
+            </Button>
             <Button
               variant="contained"
               color="primary"
@@ -693,6 +677,7 @@ const SubmittedRTOsPage = () => {
                     { headers: { Authorization: `Bearer ${token}` } }
                   );
 
+                  // ✅ Handle success and missing SKU report
                   if (res.data.success) {
                     setSnackbar({
                       open: true,
@@ -700,12 +685,14 @@ const SubmittedRTOsPage = () => {
                       severity: "success",
                     });
 
+                    // ✅ If some SKUs were not found, open missing SKUs popup
                     if (res.data.notFoundSKUs && res.data.notFoundSKUs.length > 0) {
                       setNotFoundData(res.data.notFoundSKUs);
                       setNotFoundPopupOpen(true);
                     }
 
-                    setSubmittedRTOs(prev => prev.filter(r => !selectedRows.includes(r.id)));
+                    // ✅ Refresh data
+                    setSubmittedRTOs((prev) => prev.filter((r) => !selectedRows.includes(r.id)));
                     setOpenPopup(false);
                     fetchSubmittedRTOs();
                   } else {
@@ -715,7 +702,13 @@ const SubmittedRTOsPage = () => {
                       severity: "error",
                     });
                   }
+
+                  setSubmittedRTOs(prev => prev.filter(r => !selectedRows.includes(r.id)));
+
+                  setOpenPopup(false);
+                  fetchSubmittedRTOs();
                 } catch (err) {
+                  console.error("Inventory update error:", err);
                   setSnackbar({
                     open: true,
                     message: err.response?.data?.message || "Failed to update inventory",
@@ -731,8 +724,13 @@ const SubmittedRTOsPage = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Missing SKUs Dialog */}
-        <Dialog open={notFoundPopupOpen} onClose={() => setNotFoundPopupOpen(false)} maxWidth="lg" fullWidth>
+        {/* ⚠️ Missing SKUs Popup */}
+        <Dialog
+          open={notFoundPopupOpen}
+          onClose={() => setNotFoundPopupOpen(false)}
+          maxWidth="lg"
+          fullWidth
+        >
           <DialogTitle>Unmatched SKUs Found</DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ mb: 2 }}>
@@ -772,11 +770,14 @@ const SubmittedRTOsPage = () => {
             </Table>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={() => setNotFoundPopupOpen(false)}>Close</Button>
+            <Button variant="contained" onClick={() => setNotFoundPopupOpen(false)}>
+              Close
+            </Button>
           </DialogActions>
         </Dialog>
-      </Paper>
-    </Box>
+
+      </Box>
+  </div>
   );
 };
 

@@ -33,7 +33,8 @@ const Sidebar = () => {
 
     if (role === "superadmin" || role === "admin") {
       menuItems.push(
-        {name: "Pending Claim Raised", path: "/pending-claim-raised", icon: <FaSpinner />}
+        {name: "Pending Claims", path: "/pending-claims", icon: <FaSpinner />},
+        { name: "Resolved Claims", path: "/resolved-claims", icon: <AiOutlineFileDone /> }
       );
     }
 
