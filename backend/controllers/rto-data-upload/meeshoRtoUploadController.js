@@ -151,7 +151,9 @@ function normalizeRowByHeader(row) {
   // IDs that can come as scientific notation
   obj.order_number     = toPlainDigitString(obj.order_number);
   obj.suborder_number  = cap(obj.suborder_number, 100); // has underscore often; keep as text
-  obj.awb_number       = toPlainDigitString(obj.awb_number); // UNIQUE key
+  // obj.awb_number       = toPlainDigitString(obj.awb_number); // UNIQUE key
+  obj.awb_number = obj.awb_number ? String(obj.awb_number).trim() : null;
+
 
   // dates
   obj.dispatch_date        = parsePossibleDate(obj.dispatch_date);

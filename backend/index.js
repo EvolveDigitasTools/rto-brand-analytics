@@ -8,7 +8,7 @@ import submittedRtoRoutes from "./routes/submittedRtoRoutes.js";
 import deletedRtoRoutes from "./routes/deletedRtoRoutes.js";
 import overviewRtoRoutes from "./routes/overviewRtoRoutes.js";
 import marketplacesRtoUploadRoute from "./routes/rto-data-upload/marketplacesRtoUploadRoutes.js";
-import meeshoRtoDataRoutes from "./routes/meeshoRtoDataRoutes.js";
+import getRtoDataByMarketplacesRoutes from "./routes/get-rto-data-by-marketplaces/getRtoDataByMarketplacesRoutes.js";
 import rtoToMasterInventoryRoutes from "./routes/rto-to-masterInventory/rto-to-masterInventoryRoutes.js";
 import rtoPendingClaimsRoutes from "./routes/rto-pending-claims/rtoPendingClaimsRoutes.js";
 
@@ -39,7 +39,7 @@ app.use("/api",
   deletedRtoRoutes,
   overviewRtoRoutes,
   marketplacesRtoUploadRoute,
-  meeshoRtoDataRoutes,
+  getRtoDataByMarketplacesRoutes,
   rtoToMasterInventoryRoutes,
   rtoPendingClaimsRoutes
 );
