@@ -137,6 +137,33 @@ export const RTOProvider = ({ children }) => {
     }
   }, [isAuthenticated, user]);
 
+  //Auto Logut if Token is Expired (1D)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      const now = Date.now() / 1000;
+
+      if (decoded.exp < now) {
+        logout();
+        return;
+      }
+
+      const timeLeft = (decoded.exp - now) * 1000;
+
+      const timer = setTimeout(() => {
+        logout();
+      }, timeLeft);
+
+      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Failed to decode token", error);
+      logout();
+    }
+  }, [isAuthenticated]);
+
   const submitRTO = async (rto) => {
     try {
       setLoading(true);
