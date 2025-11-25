@@ -133,7 +133,7 @@ export const getPendingNoClaimRTOs = async (req, res) => {
 
     const [rows] = await db.query(`
       SELECT 
-        id, marketplaces, awb_id, sku_code, product_title, created_at, claim_raised, ticket_id
+        id, marketplaces, pickup_partner, awb_id, sku_code, product_title, created_at, claim_raised, ticket_id
       FROM rto_submissions
       WHERE LOWER(claim_raised) = 'no'
         AND (is_claim_resolved IS NULL OR is_claim_resolved = FALSE)

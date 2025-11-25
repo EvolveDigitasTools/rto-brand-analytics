@@ -2,11 +2,11 @@ import dbPromise from "../db.js";
 import jwt from "jsonwebtoken";
 
 // export const submitRto = async (req, res) => {
-//     let db;
+//   let db;
 //   try {
-//     db = await dbPromise
+//     db = await dbPromise;
 
-//     const { marketplaces, pickupPartner, returnDate, fields } = req.body;
+//     const { fields } = req.body;
 
 //     const token = req.headers.authorization?.split("Bearer ")[1];
 //     if (!token) {
@@ -21,68 +21,74 @@ import jwt from "jsonwebtoken";
 //       return res.status(403).json({ success: false, message: "Invalid token" });
 //     }
 
-//     // Log request body for debugging
-//     console.log("Request Body:", req.body);
-
-//     if (!marketplaces || !pickupPartner || !returnDate || !fields || fields.length === 0) {
-//       return res.status(400).json({ success: false, message: "Invalid data" });
-//     }
-
-//     // Validate returnDate format
-//     const parsedReturnDate = new Date(returnDate);
-//     if (isNaN(parsedReturnDate.getTime())) {
-//       return res.status(400).json({ success: false, message: "Invalid return_date format" });
+//     if (!fields || !Array.isArray(fields) || fields.length === 0) {
+//       return res.status(400).json({ success: false, message: "Fields array is required" });
 //     }
 
 //     const insertQueries = fields.map((field) => {
-//       // Validate orderDate format
-//       const parsedOrderDate = field.orderDate ? new Date(field.orderDate) : null;
-//       if (field.orderDate && isNaN(parsedOrderDate.getTime())) {
-//         console.warn(`Invalid order_date for field: ${JSON.stringify(field)}`);
-//         return res.status(400).json({ success: false, message: `Invalid order_date for SKU: ${field.skuCode}` });
+//       const {
+//         marketplaces,
+//         pickupPartner,
+//         returnDate,
+//         skuCode,
+//         productTitle,
+//         awbId,
+//         orderId,
+//         orderDate,
+//         itemCondition,
+//         claimRaised,
+//         ticketId,
+//         returnQty,
+//         comments,
+//       } = field;
+
+//       // Validate required row-based fields
+//       if (!marketplaces || !pickupPartner || !returnDate) {
+//         throw new Error("marketplaces, pickupPartner, returnDate are required in each row");
 //       }
+
+//       // Convert dates
+//       const parsedReturnDate = new Date(returnDate).toISOString().split("T")[0];
+//       const parsedOrderDate = orderDate ? new Date(orderDate).toISOString().split("T")[0] : null;
 
 //       return [
 //         marketplaces,
 //         pickupPartner,
 //         parsedReturnDate,
-//         field.skuCode || null,
-//         field.productTitle || null,
-//         field.awbId || null,
-//         field.orderId || null,
+//         skuCode || null,
+//         productTitle || null,
+//         awbId || null,
+//         orderId || null,
 //         parsedOrderDate,
-//         field.courier || null,
-//         field.itemCondition || null,
-//         field.claimRaised || null,
-//         field.ticketId || null,
-//         field.returnQty || 1,
-//         field.comments || null,
+//         null, // courier REMOVED from frontend
+//         itemCondition || null,
+//         claimRaised || null,
+//         ticketId || null,
+//         returnQty || 1,
+//         comments || null,
 //         new Date(),
-//         created_by
+//         created_by,
 //       ];
 //     });
-
-//     // Log insert queries for debugging
-//     console.log("Insert Queries:", insertQueries);
 
 //     const sql = `
 //       INSERT INTO rto_submissions 
 //       (
 //         marketplaces,
-//         pickup_partner, 
-//         return_date, 
-//         sku_code, 
-//         product_title, 
-//         awb_id, 
-//         order_id, 
-//         order_date, 
-//         courier, 
-//         item_condition, 
-//         claim_raised, 
-//         ticket_id, 
-//         return_qty, 
-//         comments, 
-//         created_at, 
+//         pickup_partner,
+//         return_date,
+//         sku_code,
+//         product_title,
+//         awb_id,
+//         order_id,
+//         order_date,
+//         courier,
+//         item_condition,
+//         claim_raised,
+//         ticket_id,
+//         return_qty,
+//         comments,
+//         created_at,
 //         created_by
 //       )
 //       VALUES ?
@@ -91,9 +97,10 @@ import jwt from "jsonwebtoken";
 //     await db.query(sql, [insertQueries]);
 
 //     res.json({ success: true, message: "RTO data saved successfully" });
+
 //   } catch (error) {
 //     console.error("Error inserting RTO data:", error);
-//     res.status(500).json({ success: false, message: "Server error" });
+//     res.status(500).json({ success: false, message: error.message });
 //   }
 // };
 
@@ -138,6 +145,21 @@ export const submitRto = async (req, res) => {
         comments,
       } = field;
 
+      let is_claim_resolved = 0;
+      let resolved_by = null;
+      let resolved_at = null;
+
+      if (
+        itemCondition !== "Good" &&
+        claimRaised === "Yes" &&
+        ticketId &&
+        ticketId.trim() !== ""
+      ) {
+        is_claim_resolved = 1;
+        resolved_by = created_by;
+        resolved_at = new Date(); 
+      }
+
       // Validate required row-based fields
       if (!marketplaces || !pickupPartner || !returnDate) {
         throw new Error("marketplaces, pickupPartner, returnDate are required in each row");
@@ -156,7 +178,7 @@ export const submitRto = async (req, res) => {
         awbId || null,
         orderId || null,
         parsedOrderDate,
-        null, // courier REMOVED from frontend
+        null, // courier removed
         itemCondition || null,
         claimRaised || null,
         ticketId || null,
@@ -164,6 +186,9 @@ export const submitRto = async (req, res) => {
         comments || null,
         new Date(),
         created_by,
+        is_claim_resolved,
+        resolved_by,
+        resolved_at
       ];
     });
 
@@ -185,7 +210,10 @@ export const submitRto = async (req, res) => {
         return_qty,
         comments,
         created_at,
-        created_by
+        created_by,
+        is_claim_resolved,
+        resolved_by,
+        resolved_at
       )
       VALUES ?
     `;
