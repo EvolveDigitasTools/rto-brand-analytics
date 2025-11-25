@@ -85,7 +85,8 @@ const ResolvedClaimsPage = () => {
           ? params.api.getSortedRowIds().indexOf(params.id) + 1
           : "-",
     },
-    { field: "marketplaces", headerName: "Marketplace", width: 130 },
+    { field: "marketplaces", headerName: "Marketplace", width: 120 },
+    { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },    
     { field: "awb_id", headerName: "AWB ID", width: 150 },
     { field: "sku_code", headerName: "SKU Code", width: 150 },
     { field: "product_title", headerName: "Product", width: 230 },

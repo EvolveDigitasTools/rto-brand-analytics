@@ -55,7 +55,7 @@ const PendingClaimsPage = () => {
     if (user?.role === "admin" || user?.role === "superadmin") fetchClaims();
   }, [user]);
 
-  // ✅ Search Filter
+  // Search Filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredClaims(claims);
@@ -74,14 +74,14 @@ const PendingClaimsPage = () => {
     }
   }, [search, claims]);
 
-  // ✅ Open Dialog for Mark Resolve
+  // Open Dialog for Mark Resolve
   const handleMarkResolvedClick = (rto) => {
     setSelectedRto(rto);
     setTicketId("");
     setDialogOpen(true);
   };
 
-  // ✅ Confirm and Save
+  // Confirm and Save
   const handleConfirmResolve = async () => {
     if (!ticketId.trim()) {
       setSnackbar({ open: true, message: "Ticket ID is required", severity: "error" });
@@ -114,7 +114,7 @@ const PendingClaimsPage = () => {
     }
   };
 
-  // ✅ DataGrid Columns
+  // DataGrid Columns
   const columns = [
     {
       field: "sn",
@@ -126,6 +126,7 @@ const PendingClaimsPage = () => {
           : "-",
     },
     { field: "marketplaces", headerName: "Marketplace", width: 120 },
+    { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },    
     { field: "awb_id", headerName: "AWB ID", width: 150 },
     { field: "sku_code", headerName: "SKU Code", width: 130 },
     { field: "product_title", headerName: "Product", width: 220 },

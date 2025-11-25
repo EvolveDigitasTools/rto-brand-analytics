@@ -90,6 +90,8 @@ const InventoryUpdateHistory = () => {
         return totalRows - (page * pageSize + rowIndex);
       },
     },
+    { field: "marketplaces", headerName: "Marketplace", width: 120 },
+    { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },     
     { field: "sku", headerName: "SKU", width: 150 },
     { field: "sku_title", headerName: "Title", width: 280 },
     { field: "effectiveQty", headerName: "Added Qty", width: 100 },

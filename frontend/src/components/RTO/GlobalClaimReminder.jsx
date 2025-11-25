@@ -140,8 +140,14 @@ const GlobalClaimReminder = () => {
         open={open}
         onClose={handleClose}
         disableEscapeKeyDown={diffDays > 7}
-        maxWidth="sm"
+        maxWidth={false}
         fullWidth
+        PaperProps={{
+          sx: {
+            width: 700,
+            maxWidth: 700
+          }
+        }}
       >
         <DialogTitle
           sx={{
@@ -158,6 +164,7 @@ const GlobalClaimReminder = () => {
             <strong>{diffDays}</strong> day{diffDays > 1 ? "s" : ""}.
           </Typography>
           <Typography><strong>Marketplace:</strong> {current.marketplaces}</Typography>
+          <Typography><strong>Pickup Partner:</strong> {current.pickup_partner}</Typography>          
           <Typography><strong>AWB ID:</strong> {current.awb_id}</Typography>
           <Typography><strong>SKU:</strong> {current.sku_code}</Typography>
           <Typography><strong>Product:</strong> {current.product_title}</Typography>
@@ -176,11 +183,22 @@ const GlobalClaimReminder = () => {
         </DialogContent>
 
         <DialogActions sx={{ justifyContent: "space-between" }}>
+          {currentIndex > 0 && (
+            <Button
+              variant="contained"
+              color="inherit"
+              sx={{ width: "150px" }}
+              onClick={handlePrevious}
+            >
+              Previous
+            </Button>
+          )} 
+
           {diffDays < 7 && !showTicketField && (
             <Button variant="contained" color="warning" onClick={handleClose}>
               Remind Me Later
             </Button>
-          )}
+          )}         
 
           {!showTicketField ? (
             <Button
@@ -200,16 +218,6 @@ const GlobalClaimReminder = () => {
             </Button>
           )}
 
-          {currentIndex > 0 && (
-            <Button
-              variant="contained"
-              color="inherit"
-              sx={{ width: "150px" }}
-              onClick={handlePrevious}
-            >
-              Previous
-            </Button>
-          )}
           {currentIndex < pendingRtos.length - 1 && (
             <Button
               variant="contained"
