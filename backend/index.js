@@ -11,6 +11,7 @@ import marketplacesRtoUploadRoute from "./routes/rto-data-upload/marketplacesRto
 import getRtoDataByMarketplacesRoutes from "./routes/get-rto-data-by-marketplaces/getRtoDataByMarketplacesRoutes.js";
 import rtoToMasterInventoryRoutes from "./routes/rto-to-masterInventory/rto-to-masterInventoryRoutes.js";
 import rtoPendingClaimsRoutes from "./routes/rto-pending-claims/rtoPendingClaimsRoutes.js";
+import monthlyRtoDataRoutes from "./routes/monthlyRtoDataRoutes.js";
 
 dotenv.config();
 
@@ -41,7 +42,8 @@ app.use("/api",
   marketplacesRtoUploadRoute,
   getRtoDataByMarketplacesRoutes,
   rtoToMasterInventoryRoutes,
-  rtoPendingClaimsRoutes
+  rtoPendingClaimsRoutes,
+  monthlyRtoDataRoutes
 );
 app.use("/auth", authRoutes);
 

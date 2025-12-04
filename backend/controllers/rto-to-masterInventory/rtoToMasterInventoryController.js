@@ -323,13 +323,35 @@ export const updateInventoryFromRtoMultiple = async (req, res) => {
 };
 
 // 3. Fetch Updated Inventories Data of RTOs History
+// export const inventoryUpdate = async (req, res) => {
+//   const db = dbPromise;
+//   try {
+//     const [rows] = await db.query("SELECT * FROM rto_data_to_master_inventory ORDER BY updatedAt DESC");
+//     res.json({ success: true, data: rows });
+//   } catch (err) {
+//     console.error("❌ Fetch Inventory History Error:", err);
+//     res.status(500).json({ success: false, message: "Database error" });
+//   }
+// };
+
 export const inventoryUpdate = async (req, res) => {
   const db = dbPromise;
   try {
-    const [rows] = await db.query("SELECT * FROM rto_data_to_master_inventory ORDER BY updatedAt DESC");
+    const [rows] = await db.query(`
+      SELECT 
+        r.*,
+        m.sku AS meesho_sku
+      FROM rto_data_to_master_inventory r
+      LEFT JOIN meesho_rto_data m
+        ON r.awb_number = m.awb_number
+      ORDER BY r.updatedAt DESC
+    `);
+
     res.json({ success: true, data: rows });
+
   } catch (err) {
     console.error("❌ Fetch Inventory History Error:", err);
     res.status(500).json({ success: false, message: "Database error" });
   }
 };
+
