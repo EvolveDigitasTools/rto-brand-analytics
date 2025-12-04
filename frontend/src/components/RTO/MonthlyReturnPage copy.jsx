@@ -10,15 +10,31 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  MenuItem,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { format, parseISO, isValid } from "date-fns";
 
-const InventoryUpdateHistory = () => {
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const date = parseISO(dateString);
+  if (!isValid(date)) return "-";
+  return format(date, "dd MMM yyyy");
+};
+
+const MonthlyReturnData = () => {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [search, setSearch] = useState("");
+
+  // Date filters
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [month, setMonth] = useState(
+    String(new Date().getMonth() + 1).padStart(2, "0")
+  );
+
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -26,21 +42,31 @@ const InventoryUpdateHistory = () => {
     severity: "info",
   });
 
+  const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL;
 
+  // Fetching data with year & month filters
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/inventory-updates`);
+      const res = await axios.get(
+        `${API_URL}/api/monthly-rto-data?year=${year}&month=${month}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (res.data.success) {
         setRows(res.data.data);
         setFilteredRows(res.data.data);
       }
     } catch (err) {
-      console.error("Error fetching inventory history:", err);
+      console.error("Error fetching Monthly RTO data:", err);
       setSnackbar({
         open: true,
-        message: "Error fetching inventory update history",
+        message: "Error fetching Monthly RTO data",
         severity: "error",
       });
     } finally {
@@ -50,9 +76,9 @@ const InventoryUpdateHistory = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [year, month]); // auto-refresh on date change
 
-  // ✅ Search filter
+  // Search filter
   useEffect(() => {
     if (!search.trim()) {
       setFilteredRows(rows);
@@ -92,28 +118,32 @@ const InventoryUpdateHistory = () => {
     },
     { field: "marketplaces", headerName: "Marketplace", width: 100 },
     { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },
-    { field: "meesho_sku", headerName: "Meesho SKU", width: 180 },
-    { field: "sku", headerName: "Base SKU", width: 180 },
-    { field: "sku_title", headerName: "Title", width: 280 },
-    { field: "effectiveQty", headerName: "Added Qty", width: 100 },
-    { field: "return_qty", headerName: "Return Qty", width: 100 },
-    { field: "awb_number", headerName: "AWB Number", width: 160 },
-    { field: "order_number", headerName: "Order Number", width: 160 },
-    { field: "processed_by", headerName: "Processed By", width: 160 },
-    { field: "source", headerName: "Source", width: 100 },
+    { field: "return_date", headerName: "Return Date", width: 100, renderCell: (params) => formatDate(params.value) },
+    { field: "sku_code", headerName: "SKU", width: 180 },
+    { field: "product_title", headerName: "Title", width: 280 },
+    { field: "total_orders", headerName: "Total Orders", width: 100 },
+    { field: "total_rto_qty", headerName: "Total RTO Qty", width: 120 },
+    { field: "rto_percentage", headerName: "RTO %", width: 70 },    
+    { field: "awb_id", headerName: "AWB Id", width: 150 },
+    { field: "item_condition", headerName: "Condition", width: 100 },
+    { field: "claim_raised", headerName: "Claim Raised", width: 110 },
+    { field: "ticket_id", headerName: "Ticket Id", width: 80 },
+    // { field: "return_qty", headerName: "Return Qty", width: 100 },
     {
-      field: "updatedAt",
-      headerName: "Updated At",
+      field: "created_at",
+      headerName: "Created At",
       width: 180,
       renderCell: (params) =>
         params.value ? new Date(params.value).toLocaleString() : "-",
     },
+    { field: "created_by", headerName: "Created By", width: 160 },
+    // { field: "source", headerName: "Source", width: 100 },
   ];
 
   return (
     <Box sx={{ p: 3 }}>
       <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-        {/* ✅ Header Section */}
+        {/* ⭐ Header Section */}
         <Box
           sx={{
             mb: 2,
@@ -125,20 +155,56 @@ const InventoryUpdateHistory = () => {
           }}
         >
           <Typography variant="h5" fontWeight={600}>
-            Inventory Update History ({filteredRows.length})
+            Monthly Return Data ({filteredRows.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* ⭐ Month Filter */}
+            <TextField
+              select
+              size="small"
+              label="Month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+            >
+              {Array.from({ length: 12 }, (_, i) => {
+                const m = String(i + 1).padStart(2, "0");
+                return (
+                  <MenuItem key={m} value={m}>
+                    {m}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
+
+            {/* ⭐ Year Filter */}
+            <TextField
+              select
+              size="small"
+              label="Year"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              {["2024", "2025", "2026"].map((yr) => (
+                <MenuItem key={yr} value={yr}>
+                  {yr}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* ⭐ Search */}
             <TextField
               size="small"
               variant="outlined"
-              placeholder="Search by SKU, AWB, or Processed By..."
+              placeholder="Search SKU, AWB, etc..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               InputProps={{
                 startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
               }}
             />
+
+            {/* ⭐ Refresh */}
             <Tooltip title="Refresh">
               <IconButton onClick={fetchHistory} color="primary">
                 <RefreshIcon />
@@ -147,7 +213,7 @@ const InventoryUpdateHistory = () => {
           </Box>
         </Box>
 
-        {/* ✅ Data Table */}
+        {/* ⭐ Data Table */}
         {loading ? (
           <Box
             sx={{
@@ -188,7 +254,7 @@ const InventoryUpdateHistory = () => {
           </div>
         )}
 
-        {/* ✅ Snackbar Notifications */}
+        {/* ⭐ Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
@@ -202,4 +268,4 @@ const InventoryUpdateHistory = () => {
   );
 };
 
-export default InventoryUpdateHistory;
+export default MonthlyReturnData;

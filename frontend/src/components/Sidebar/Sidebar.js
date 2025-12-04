@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { FaFileAlt, FaTrash, FaBars, FaChartPie, FaUsers, FaCloudUploadAlt, FaHistory, FaSpinner  } from "react-icons/fa";
+import { TbTruckReturn } from "react-icons/tb";
 import { AiOutlineFileDone } from "react-icons/ai";
 import { RTOContext } from "../../Context/RTOContext";
 import './Sidebar.css';
@@ -22,7 +23,7 @@ const Sidebar = () => {
 
     menuItems.push(
       { name: "RTO Form", path: "/rto-form", icon: <FaFileAlt /> },
-      { name: "Submitted RTOs", path: "/submitted-rto", icon: <AiOutlineFileDone /> }
+      { name: "Submitted RTOs", path: "/submitted-rto", icon: <AiOutlineFileDone size={20}/> }
     );
 
     if (role === "superadmin") {
@@ -34,7 +35,8 @@ const Sidebar = () => {
     if (role === "superadmin" || role === "admin") {
       menuItems.push(
         {name: "Pending Claims", path: "/pending-claims", icon: <FaSpinner />},
-        { name: "Resolved Claims", path: "/resolved-claims", icon: <AiOutlineFileDone /> }
+        {name: "Resolved Claims", path: "/resolved-claims", icon: <AiOutlineFileDone size={20}/> },
+        {name: "Monthly Return %", path: "/monthly-return", icon: <TbTruckReturn size={20} /> }  
       );
     }
 

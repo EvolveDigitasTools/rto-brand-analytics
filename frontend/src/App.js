@@ -19,6 +19,7 @@ import InventoryUpdateHistory from "./components/RTO/InventoryUpdateHistory";
 import PendingClaimsPage from "./components/RTO/PendingClaimRaised";
 import ResolvedClaimsPage from "./components/RTO/ResolvedClaimsPage";
 import GlobalClaimReminder from "./components/RTO/GlobalClaimReminder";
+import MonthlyReturnPage from "./components/RTO/MonthlyReturnPage";
 
 function HomeRoute() {
   const { isAuthenticated } = useContext(RTOContext);
@@ -53,6 +54,7 @@ function App() {
               <Route path="/inventory-update-history" element={<InventoryUpdateHistory />} /> 
               <Route path="/pending-claims" element={<PendingClaimsPage />} />
               <Route path="/resolved-claims" element={<ResolvedClaimsPage />} />                                                        
+              <Route path="/monthly-return" element={<MonthlyReturnPage />} />
             </Route>
           </Route>
         </Routes>
