@@ -13,7 +13,7 @@ import {
   MenuItem,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
@@ -25,7 +25,9 @@ const MonthlyReturnData = () => {
   const [filteredRows, setFilteredRows] = useState([]);
   const [search, setSearch] = useState("");
   const [year, setYear] = useState(new Date().getFullYear().toString());
-  const [month, setMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
+  const [month, setMonth] = useState(
+    String(new Date().getMonth() + 1).padStart(2, "0")
+  );
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -36,6 +38,7 @@ const MonthlyReturnData = () => {
   const [detailRows, setDetailRows] = useState([]);
   const [detailColumns, setDetailColumns] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [popupLoading, setPopupLoading] = useState(false);
 
   const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL;
@@ -65,7 +68,9 @@ const MonthlyReturnData = () => {
     }
   };
 
-  useEffect(() => { fetchHistory(); }, [year, month]);
+  useEffect(() => {
+    fetchHistory();
+  }, [year, month]);
 
   // Search Filter
   useEffect(() => {
@@ -73,16 +78,30 @@ const MonthlyReturnData = () => {
 
     const q = search.toLowerCase();
     setFilteredRows(
-      rows.filter((r) =>
-        r.sku_code?.toLowerCase().includes(q) ||
-        r.product_title?.toLowerCase().includes(q) ||
-        r.awb_id?.toLowerCase().includes(q)
+      rows.filter(
+        (r) =>
+          r.sku_code?.toLowerCase().includes(q) ||
+          r.product_title?.toLowerCase().includes(q) ||
+          r.total_orders?.toString().includes(q)
       )
     );
   }, [search, rows]);
 
   // Table Columns
   const columns = [
+    // {
+    //   field: "sn",
+    //   headerName: "S.No",
+    //   width: 70,
+    //   renderCell: (params) => {
+    //     const api = params.api;
+    //     const sortedRowIds = api.getSortedRowIds ? api.getSortedRowIds() : [];
+    //     const rowIndex = sortedRowIds.indexOf(params.id);
+    //     const page = api.state.pagination.paginationModel.page;
+    //     const pageSize = api.state.pagination.paginationModel.pageSize;
+    //     return sortedRowIds.length - (page * pageSize + rowIndex);
+    //   },
+    // },
     {
       field: "sn",
       headerName: "S.No",
@@ -91,9 +110,8 @@ const MonthlyReturnData = () => {
         const api = params.api;
         const sortedRowIds = api.getSortedRowIds ? api.getSortedRowIds() : [];
         const rowIndex = sortedRowIds.indexOf(params.id);
-        const page = api.state.pagination.paginationModel.page;
-        const pageSize = api.state.pagination.paginationModel.pageSize;
-        return sortedRowIds.length - (page * pageSize + rowIndex);
+
+        return rowIndex + 1;
       },
     },
     { field: "sku_code", headerName: "SKU Code", width: 250 },
@@ -105,7 +123,8 @@ const MonthlyReturnData = () => {
       field: "created_at",
       headerName: "Created At",
       width: 160,
-      renderCell: (params) => params.value ? new Date(params.value).toLocaleString() : "-",
+      renderCell: (params) =>
+        params.value ? new Date(params.value).toLocaleString() : "-",
     },
     { field: "created_by", headerName: "Created By", width: 130 },
   ];
@@ -114,28 +133,39 @@ const MonthlyReturnData = () => {
   const handleRowClick = async (params) => {
     const row = params.row;
 
-    // 1️⃣ Fetch breakdown rows for this SKU
+    // Open popup instantly
+    setPopupLoading(true);
+    setOpenDialog(true);
+    setDetailRows([]);
+    setDetailColumns([]);
+
     try {
       const res = await axios.get(
         `${API_URL}/api/monthly-rto-breakdown?sku=${row.sku_code}&year=${year}&month=${month}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const breakdown = res.data.data || [];
 
-      const breakdownWithSN = breakdown.map((item, index) => ({
-        id: index + 1,
-        sn: index + 1,
-        ...item
-      }));
+      let badConditionExists = false;
 
-      // 2️⃣ Build dynamic columns
+      const breakdownWithSN = breakdown.map((item, i) => {
+        if (
+          item.damaged > 0 ||
+          item.missing > 0 ||
+          item.wrong_return > 0 ||
+          item.used > 0
+        ) {
+          badConditionExists = true;
+        }
+        return { id: i + 1, sn: i + 1, ...item };
+      });
+
       const dynamic = [
-        { field: "sn", headerName: "S.N.", width: 70},
+        { field: "sn", headerName: "S.N.", width: 70 },
         { field: "marketplaces", headerName: "Marketplace", width: 120 },
         { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },
-        { field: "sku_code", headerName: "SKU", width: 250 },
-        { field: "total_orders", headerName: "Total Orders", width: 120 },
+        { field: "sku_code", headerName: "SKU", width: 300 },
         { field: "total_rto_qty", headerName: "RTO Qty", width: 120 },
       ];
 
@@ -147,51 +177,77 @@ const MonthlyReturnData = () => {
         { key: "used", label: "Used" },
       ];
 
-      conditionFields.forEach((c) => {
-        if (breakdown.some(b => b[c.key] > 0)) {
+      for (const c of conditionFields) {
+        if (breakdown.some((b) => b[c.key] > 0)) {
           dynamic.push({
             field: c.key,
             headerName: c.label,
             width: 120,
           });
         }
-      });
+      }
 
-      dynamic.push({
-        field: "ticket_id",
-        headerName: "Ticket ID",
-        width: 150,
-      });
+      if (badConditionExists) {
+        dynamic.push({
+          field: "ticket_id",
+          headerName: "Ticket ID",
+          width: 150,
+        });
+      }
 
-      // 3️⃣ Set data
+      // Set data AFTER API returns
       setDetailRows(breakdownWithSN);
       setDetailColumns(dynamic);
-      setOpenDialog(true);
-
     } catch (err) {
       console.error("Breakdown fetch error:", err);
     }
+
+    setPopupLoading(false);
   };
 
   return (
     <Box sx={{ p: 3 }}>
       <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
         {/* Header */}
-        <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+        <Box
+          sx={{
+            mb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
           <Typography variant="h5" fontWeight={600}>
             Monthly Return Data ({filteredRows.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <TextField select size="small" label="Month" value={month} onChange={(e) => setMonth(e.target.value)}>
+            <TextField
+              select
+              size="small"
+              label="Month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+            >
               {Array.from({ length: 12 }, (_, i) => (
-                <MenuItem key={i} value={String(i + 1).padStart(2, "0")}>{String(i + 1).padStart(2, "0")}</MenuItem>
+                <MenuItem key={i} value={String(i + 1).padStart(2, "0")}>
+                  {String(i + 1).padStart(2, "0")}
+                </MenuItem>
               ))}
             </TextField>
 
-            <TextField select size="small" label="Year" value={year} onChange={(e) => setYear(e.target.value)}>
+            <TextField
+              select
+              size="small"
+              label="Year"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
               {["2024", "2025", "2026"].map((yr) => (
-                <MenuItem key={yr} value={yr}>{yr}</MenuItem>
+                <MenuItem key={yr} value={yr}>
+                  {yr}
+                </MenuItem>
               ))}
             </TextField>
 
@@ -204,7 +260,9 @@ const MonthlyReturnData = () => {
             />
 
             <Tooltip title="Refresh">
-              <IconButton onClick={fetchHistory} color="primary"><RefreshIcon /></IconButton>
+              <IconButton onClick={fetchHistory} color="primary">
+                <RefreshIcon />
+              </IconButton>
             </Tooltip>
           </Box>
         </Box>
@@ -224,28 +282,28 @@ const MonthlyReturnData = () => {
               rowsPerPageOptions={[10, 20, 50]}
               disableSelectionOnClick
               onRowClick={handleRowClick}
-              sx={{ 
-                backgroundColor: "#fff", 
-                borderRadius: 2, 
-                "& .MuiDataGrid-columnHeaders": { 
-                  backgroundColor: "#1976d2", 
-                  color: "#000000ff", 
-                  fontWeight: "bold", 
-                }, 
-                "& .MuiDataGrid-row:hover": { 
+              sx={{
+                backgroundColor: "#fff",
+                borderRadius: 2,
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#1976d2",
+                  color: "#000000ff",
+                  fontWeight: "bold",
+                },
+                "& .MuiDataGrid-row:hover": {
                   backgroundColor: "#f5f5f5",
-                  ":hover": { cursor: "pointer" }
-                }, 
+                  ":hover": { cursor: "pointer" },
+                },
               }}
             />
           </div>
         )}
 
         {/* Popup Dialog */}
-        <Dialog 
-          open={openDialog} 
-          onClose={() => setOpenDialog(false)} 
-          maxWidth="lg" 
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          maxWidth="lg"
           fullWidth
         >
           <DialogTitle sx={{ m: 0, p: 2, fontWeight: "600" }}>
@@ -259,9 +317,9 @@ const MonthlyReturnData = () => {
                 top: 8,
                 backgroundColor: "#cd0826",
                 color: "#fff",
-                "&:hover": { 
+                "&:hover": {
                   backgroundColor: "#000",
-                  color: "#fff" 
+                  color: "#fff",
                 },
               }}
             >
@@ -271,7 +329,18 @@ const MonthlyReturnData = () => {
 
           <DialogContent dividers>
             <div style={{ height: 350, width: "100%" }}>
-              {detailRows && detailRows.length > 0 ? (
+              {popupLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%",
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : detailRows.length > 0 ? (
                 <DataGrid
                   rows={detailRows}
                   columns={detailColumns}

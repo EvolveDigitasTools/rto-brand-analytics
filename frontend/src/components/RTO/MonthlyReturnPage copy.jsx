@@ -11,30 +11,21 @@ import {
   Snackbar,
   Alert,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { format, parseISO, isValid } from "date-fns";
-
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  const date = parseISO(dateString);
-  if (!isValid(date)) return "-";
-  return format(date, "dd MMM yyyy");
-};
+import CloseIcon from "@mui/icons-material/Close";
 
 const MonthlyReturnData = () => {
   const [rows, setRows] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   const [search, setSearch] = useState("");
-
-  // Date filters
   const [year, setYear] = useState(new Date().getFullYear().toString());
-  const [month, setMonth] = useState(
-    String(new Date().getMonth() + 1).padStart(2, "0")
-  );
-
+  const [month, setMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -42,20 +33,20 @@ const MonthlyReturnData = () => {
     severity: "info",
   });
 
+  const [detailRows, setDetailRows] = useState([]);
+  const [detailColumns, setDetailColumns] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+
   const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL;
 
-  // Fetching data with year & month filters
+  // Fetch API
   const fetchHistory = async () => {
     setLoading(true);
     try {
       const res = await axios.get(
         `${API_URL}/api/monthly-rto-data?year=${year}&month=${month}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (res.data.success) {
@@ -74,30 +65,23 @@ const MonthlyReturnData = () => {
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, [year, month]); // auto-refresh on date change
+  useEffect(() => { fetchHistory(); }, [year, month]);
 
-  // Search filter
+  // Search Filter
   useEffect(() => {
-    if (!search.trim()) {
-      setFilteredRows(rows);
-    } else {
-      const q = search.toLowerCase();
-      setFilteredRows(
-        rows.filter(
-          (r) =>
-            r.sku?.toLowerCase().includes(q) ||
-            r.sku_title?.toLowerCase().includes(q) ||
-            r.awb_number?.toLowerCase().includes(q) ||
-            r.order_number?.toLowerCase().includes(q) ||
-            r.processed_by?.toLowerCase().includes(q) ||
-            r.source?.toLowerCase().includes(q)
-        )
-      );
-    }
+    if (!search.trim()) return setFilteredRows(rows);
+
+    const q = search.toLowerCase();
+    setFilteredRows(
+      rows.filter((r) =>
+        r.sku_code?.toLowerCase().includes(q) ||
+        r.product_title?.toLowerCase().includes(q) ||
+        r.awb_id?.toLowerCase().includes(q)
+      )
+    );
   }, [search, rows]);
 
+  // Table Columns
   const columns = [
     {
       field: "sn",
@@ -106,155 +90,209 @@ const MonthlyReturnData = () => {
       renderCell: (params) => {
         const api = params.api;
         const sortedRowIds = api.getSortedRowIds ? api.getSortedRowIds() : [];
-        if (!sortedRowIds.length) return "-";
         const rowIndex = sortedRowIds.indexOf(params.id);
-        if (rowIndex === -1) return "-";
         const page = api.state.pagination.paginationModel.page;
         const pageSize = api.state.pagination.paginationModel.pageSize;
-        if (isNaN(page) || isNaN(pageSize)) return "-";
-        const totalRows = sortedRowIds.length;
-        return totalRows - (page * pageSize + rowIndex);
+        return sortedRowIds.length - (page * pageSize + rowIndex);
       },
     },
-    { field: "marketplaces", headerName: "Marketplace", width: 100 },
-    { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },
-    { field: "return_date", headerName: "Return Date", width: 100, renderCell: (params) => formatDate(params.value) },
-    { field: "sku_code", headerName: "SKU", width: 180 },
-    { field: "product_title", headerName: "Title", width: 280 },
-    { field: "total_orders", headerName: "Total Orders", width: 100 },
-    { field: "total_rto_qty", headerName: "Total RTO Qty", width: 120 },
-    { field: "rto_percentage", headerName: "RTO %", width: 70 },    
-    { field: "awb_id", headerName: "AWB Id", width: 150 },
-    { field: "item_condition", headerName: "Condition", width: 100 },
-    { field: "claim_raised", headerName: "Claim Raised", width: 110 },
-    { field: "ticket_id", headerName: "Ticket Id", width: 80 },
-    // { field: "return_qty", headerName: "Return Qty", width: 100 },
+    { field: "sku_code", headerName: "SKU Code", width: 250 },
+    { field: "product_title", headerName: "Title", width: 380 },
+    { field: "total_orders", headerName: "Total Orders", width: 120 },
+    { field: "total_rto_qty", headerName: "Total Return Qty", width: 150 },
+    { field: "rto_percentage", headerName: "RTO %", width: 80 },
     {
       field: "created_at",
       headerName: "Created At",
-      width: 180,
-      renderCell: (params) =>
-        params.value ? new Date(params.value).toLocaleString() : "-",
+      width: 160,
+      renderCell: (params) => params.value ? new Date(params.value).toLocaleString() : "-",
     },
-    { field: "created_by", headerName: "Created By", width: 160 },
-    // { field: "source", headerName: "Source", width: 100 },
+    { field: "created_by", headerName: "Created By", width: 130 },
   ];
+
+  // Row Click → Show Popup
+  const handleRowClick = async (params) => {
+    const row = params.row;
+
+    // 1️⃣ Fetch breakdown rows for this SKU
+    try {
+      const res = await axios.get(
+        `${API_URL}/api/monthly-rto-breakdown?sku=${row.sku_code}&year=${year}&month=${month}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const breakdown = res.data.data || [];
+
+      const breakdownWithSN = breakdown.map((item, index) => ({
+        id: index + 1,
+        sn: index + 1,
+        ...item
+      }));
+
+      // 2️⃣ Build dynamic columns
+      const dynamic = [
+        { field: "sn", headerName: "S.N.", width: 70},
+        { field: "marketplaces", headerName: "Marketplace", width: 120 },
+        { field: "pickup_partner", headerName: "Pickup Partner", width: 120 },
+        { field: "sku_code", headerName: "SKU", width: 250 },
+        { field: "total_orders", headerName: "Total Orders", width: 120 },
+        { field: "total_rto_qty", headerName: "RTO Qty", width: 120 },
+      ];
+
+      const conditionFields = [
+        { key: "good", label: "Good" },
+        { key: "damaged", label: "Damaged" },
+        { key: "missing", label: "Missing" },
+        { key: "wrong_return", label: "Wrong Return" },
+        { key: "used", label: "Used" },
+      ];
+
+      conditionFields.forEach((c) => {
+        if (breakdown.some(b => b[c.key] > 0)) {
+          dynamic.push({
+            field: c.key,
+            headerName: c.label,
+            width: 120,
+          });
+        }
+      });
+
+      dynamic.push({
+        field: "ticket_id",
+        headerName: "Ticket ID",
+        width: 150,
+      });
+
+      // 3️⃣ Set data
+      setDetailRows(breakdownWithSN);
+      setDetailColumns(dynamic);
+      setOpenDialog(true);
+
+    } catch (err) {
+      console.error("Breakdown fetch error:", err);
+    }
+  };
 
   return (
     <Box sx={{ p: 3 }}>
       <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-        {/* ⭐ Header Section */}
-        <Box
-          sx={{
-            mb: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 2,
-          }}
-        >
+        {/* Header */}
+        <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
           <Typography variant="h5" fontWeight={600}>
             Monthly Return Data ({filteredRows.length})
           </Typography>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* ⭐ Month Filter */}
-            <TextField
-              select
-              size="small"
-              label="Month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-            >
-              {Array.from({ length: 12 }, (_, i) => {
-                const m = String(i + 1).padStart(2, "0");
-                return (
-                  <MenuItem key={m} value={m}>
-                    {m}
-                  </MenuItem>
-                );
-              })}
-            </TextField>
-
-            {/* ⭐ Year Filter */}
-            <TextField
-              select
-              size="small"
-              label="Year"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-            >
-              {["2024", "2025", "2026"].map((yr) => (
-                <MenuItem key={yr} value={yr}>
-                  {yr}
-                </MenuItem>
+            <TextField select size="small" label="Month" value={month} onChange={(e) => setMonth(e.target.value)}>
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i} value={String(i + 1).padStart(2, "0")}>{String(i + 1).padStart(2, "0")}</MenuItem>
               ))}
             </TextField>
 
-            {/* ⭐ Search */}
+            <TextField select size="small" label="Year" value={year} onChange={(e) => setYear(e.target.value)}>
+              {["2024", "2025", "2026"].map((yr) => (
+                <MenuItem key={yr} value={yr}>{yr}</MenuItem>
+              ))}
+            </TextField>
+
             <TextField
               size="small"
-              variant="outlined"
-              placeholder="Search SKU, AWB, etc..."
+              placeholder="Search SKU..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              InputProps={{
-                startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
-              }}
+              InputProps={{ startAdornment: <SearchIcon sx={{ mr: 1 }} /> }}
             />
 
-            {/* ⭐ Refresh */}
             <Tooltip title="Refresh">
-              <IconButton onClick={fetchHistory} color="primary">
-                <RefreshIcon />
-              </IconButton>
+              <IconButton onClick={fetchHistory} color="primary"><RefreshIcon /></IconButton>
             </Tooltip>
           </Box>
         </Box>
 
-        {/* ⭐ Data Table */}
+        {/* Table */}
         {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "300px",
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", height: 300 }}>
             <CircularProgress />
           </Box>
-        ) : filteredRows.length === 0 ? (
-          <Typography sx={{ textAlign: "center", py: 5 }}>
-            No inventory updates found.
-          </Typography>
         ) : (
           <div style={{ height: 600, width: "100%" }}>
             <DataGrid
               rows={filteredRows}
               columns={columns}
-              getRowId={(row) => row.id}
+              getRowId={(r) => r.id}
               pageSize={10}
               rowsPerPageOptions={[10, 20, 50]}
               disableSelectionOnClick
-              sx={{
-                backgroundColor: "#fff",
-                borderRadius: 2,
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#1976d2",
-                  color: "#000000ff",
-                  fontWeight: "bold",
-                },
-                "& .MuiDataGrid-row:hover": {
+              onRowClick={handleRowClick}
+              sx={{ 
+                backgroundColor: "#fff", 
+                borderRadius: 2, 
+                "& .MuiDataGrid-columnHeaders": { 
+                  backgroundColor: "#1976d2", 
+                  color: "#000000ff", 
+                  fontWeight: "bold", 
+                }, 
+                "& .MuiDataGrid-row:hover": { 
                   backgroundColor: "#f5f5f5",
-                },
+                  ":hover": { cursor: "pointer" }
+                }, 
               }}
             />
           </div>
         )}
 
-        {/* ⭐ Snackbar */}
+        {/* Popup Dialog */}
+        <Dialog 
+          open={openDialog} 
+          onClose={() => setOpenDialog(false)} 
+          maxWidth="lg" 
+          fullWidth
+        >
+          <DialogTitle sx={{ m: 0, p: 2, fontWeight: "600" }}>
+            Detailed Information
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenDialog(false)}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: 8,
+                backgroundColor: "#cd0826",
+                color: "#fff",
+                "&:hover": { 
+                  backgroundColor: "#000",
+                  color: "#fff" 
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent dividers>
+            <div style={{ height: 350, width: "100%" }}>
+              {detailRows && detailRows.length > 0 ? (
+                <DataGrid
+                  rows={detailRows}
+                  columns={detailColumns}
+                  hideFooter
+                  getRowId={(r) => r.id}
+                  sx={{
+                    borderRadius: 2,
+                    "& .MuiDataGrid-columnHeaders": {
+                      backgroundColor: "#f1f1f1",
+                      fontWeight: 600,
+                    },
+                  }}
+                />
+              ) : (
+                <Typography>No detailed data found.</Typography>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
