@@ -13,6 +13,13 @@ export const fetchMonthlyRtoData = async (req, res) => {
   try {
     const db = await dbPromise;
 
+    // ✅ Get correct last day for any month (28,29,30,31 auto)
+    function getLastDay(y, m) {
+      return new Date(y, m, 0).getDate(); 
+    }
+
+    const lastDay = getLastDay(Number(year), Number(month));
+
     /* -----------------------------------------
      * 1) Fetch RTO summary grouped by SKU
      * ----------------------------------------- */
@@ -32,27 +39,25 @@ export const fetchMonthlyRtoData = async (req, res) => {
       [year, month]
     );
 
-    // console.log("🔎 RTO Summary COUNT:", skuSummary.length);
-
+    // If no rows for selected month/year
     if (!skuSummary.length) {
-      return res.json({ success: true, data: [] });
+      return res.json({
+        success: true,
+        data: [],
+        message: `No return data found for ${year}-${month}.`
+      });
     }
 
     /* -----------------------------------------
-     * 2) Extract base SKUs (advanced parser)
+     * 2) Extract base SKUs
      * ----------------------------------------- */
     function extractBaseSku(rawSku) {
       if (!rawSku) return [];
 
       let cleaned = rawSku.replace(/-PK\d*/gi, "");
-
       const numeric = cleaned.match(/\b\d+\b/g);
 
-      if (numeric) {
-        return numeric.map(String);
-      }
-
-      return [rawSku];
+      return numeric ? numeric.map(String) : [rawSku];
     }
 
     let baseSkuList = [];
@@ -64,10 +69,8 @@ export const fetchMonthlyRtoData = async (req, res) => {
 
     baseSkuList = Array.from(new Set(baseSkuList));
 
-    // console.log("\n📌 BASE SKU CODES:", baseSkuList);
-
     /* -----------------------------------------
-     * 3) Lookup SKU table for exact matches
+     * 3) Lookup SKU table
      * ----------------------------------------- */
     const [skuRows] = await db.query(
       `SELECT id, skuCode FROM sku WHERE skuCode IN (?)`,
@@ -77,14 +80,10 @@ export const fetchMonthlyRtoData = async (req, res) => {
     const skuIdMap = {};
     skuRows.forEach((r) => (skuIdMap[r.skuCode] = r.id));
 
-    // console.log("\n📌 SKU TABLE MATCHES:", skuIdMap);
-
     /* -----------------------------------------
-     * 4) Lookup COMBO table for non-matching base SKUs
+     * 4) Lookup COMBO table for leftovers
      * ----------------------------------------- */
     const missingBases = baseSkuList.filter((b) => !skuIdMap[b]);
-
-    // console.log("\n📌 BASE SKUs NOT FOUND IN SKU TABLE:", missingBases);
 
     let comboRows = [];
     if (missingBases.length) {
@@ -93,8 +92,6 @@ export const fetchMonthlyRtoData = async (req, res) => {
         [missingBases]
       );
     }
-
-    // console.log("\n📌 COMBO MATCHES:", comboRows);
 
     const comboIdMap = {};
     comboRows.forEach((c) => (comboIdMap[c.combo_name] = c.id));
@@ -124,8 +121,6 @@ export const fetchMonthlyRtoData = async (req, res) => {
         comboChildMap[combo.combo_name].push(cr.sku_id);
       });
     }
-
-    // console.log("\n📌 COMBO CHILD MAP:", comboChildMap);
 
     /* -----------------------------------------
      * 6) Condition counts
@@ -163,25 +158,35 @@ export const fetchMonthlyRtoData = async (req, res) => {
     });
 
     /* -----------------------------------------
-     * 🚀 7) Load ALL orders & order_items ONCE (major speed boost)
+     * 7) Load ALL orders & order_items
      * ----------------------------------------- */
     const [orderItemRows] = await db.query(
       `SELECT sku_id, order_id FROM order_items`
     );
+
+    let nextMonth = Number(month) + 1;
+    let nextYear = Number(year);
+
+    if (nextMonth === 13) {
+      nextMonth = 1;
+      nextYear++;
+    }
+
+    const nextMonthStr = String(nextMonth).padStart(2, "0");
 
     const [orderRows] = await db.query(
       `
       SELECT id
       FROM orders
       WHERE orderDateTime >= CONCAT(?, '-', ?, '-01')
-      AND orderDateTime <  CONCAT(?, '-', ?, '-31')
+      AND orderDateTime <  CONCAT(?, '-', ?, '-01')
       `,
-      [year, month, year, month]
+      [year, month, nextYear, nextMonthStr]
     );
 
     const validOrderIds = new Set(orderRows.map((o) => o.id));
 
-    // Build sku → order IDs map
+    // Build map: sku_id → order_ids
     const skuOrderMap = {};
     orderItemRows.forEach((oi) => {
       if (!skuOrderMap[oi.sku_id]) skuOrderMap[oi.sku_id] = new Set();
@@ -191,7 +196,7 @@ export const fetchMonthlyRtoData = async (req, res) => {
     });
 
     /* -----------------------------------------
-     * 8) Compute total orders per SKU (FAST)
+     * 8) Combine everything into final output
      * ----------------------------------------- */
     const finalRows = [];
 
@@ -209,8 +214,6 @@ export const fetchMonthlyRtoData = async (req, res) => {
         }
       }
 
-      //   console.log(`\n👉 SKU: ${origSku} → Candidate IDs:`, childSkuIds);
-
       childSkuIds = Array.from(new Set(childSkuIds));
 
       let totalOrders = 0;
@@ -220,8 +223,6 @@ export const fetchMonthlyRtoData = async (req, res) => {
           totalOrders += skuOrderMap[id].size;
         }
       });
-
-      //   console.log(`✔ SQL COUNT for ${origSku}:`, totalOrders);
 
       const rtoPercentage =
         totalOrders > 0
@@ -248,6 +249,7 @@ export const fetchMonthlyRtoData = async (req, res) => {
     }
 
     return res.json({ success: true, data: finalRows });
+
   } catch (err) {
     console.error("❌ ERROR (fetchMonthlyRtoData):", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -306,9 +308,7 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
       [extractedBases]
     );
 
-    const skuIdMap = Object.fromEntries(
-      skuRows.map((s) => [s.skuCode, s.id])
-    );
+    const skuIdMap = Object.fromEntries(skuRows.map((s) => [s.skuCode, s.id]));
 
     const missingList = extractedBases.filter((b) => !skuIdMap[b]);
     let comboChildIds = [];
@@ -334,16 +334,31 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     const skuIdList = [...new Set([...Object.values(skuIdMap), ...comboChildIds])];
 
     /* ---------------------------------------------------------
-     * 4) Fetch orders + order items together (WAY faster)
+     * 4) SAFE MONTH RANGE (fix MySQL invalid date)
+     * --------------------------------------------------------- */
+
+    // Compute first day of next month — safe for all months
+    let nextMonth = Number(month) + 1;
+    let nextYear = Number(year);
+
+    if (nextMonth === 13) {
+      nextMonth = 1;
+      nextYear++;
+    }
+
+    const nextMonthStr = String(nextMonth).padStart(2, "0");
+
+    /* ---------------------------------------------------------
+     * 5) Fetch orders of selected month (SAFE)
      * --------------------------------------------------------- */
     const [orderRows] = await db.query(
       `
-      SELECT id, marketplace
+      SELECT id
       FROM orders
       WHERE orderDateTime >= CONCAT(?, '-', ?, '-01')
-      AND orderDateTime <  CONCAT(?, '-', ?, '-31')
+      AND orderDateTime <  CONCAT(?, '-', ?, '-01')
       `,
-      [year, month, year, month]
+      [year, month, nextYear, nextMonthStr]
     );
 
     if (!orderRows.length) {
@@ -368,7 +383,9 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
 
     const validOrderIds = new Set(orderRows.map((o) => o.id));
 
-    // Order lookup is now O(1)
+    /* ---------------------------------------------------------
+     * 6) Order items lookup
+     * --------------------------------------------------------- */
     const [orderItemRows] = await db.query(
       `
       SELECT sku_id, order_id 
@@ -379,7 +396,7 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     );
 
     /* ---------------------------------------------------------
-     * 5) Precompute ALL matched orders (remove loop inside loop)
+     * 7) Compute matched orders
      * --------------------------------------------------------- */
     const matchedOrders = new Set(
       orderItemRows
@@ -388,7 +405,7 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     );
 
     /* ---------------------------------------------------------
-     * 6) Construct breakdown map (faster object operations)
+     * 8) Build breakdown map
      * --------------------------------------------------------- */
     const breakdownMap = {};
 
@@ -424,7 +441,7 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     }
 
     /* ---------------------------------------------------------
-     * 7) SEND RESPONSE
+     * 9) SEND RESPONSE
      * --------------------------------------------------------- */
     return res.json({
       success: true,
@@ -438,4 +455,5 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     });
   }
 };
+
 
