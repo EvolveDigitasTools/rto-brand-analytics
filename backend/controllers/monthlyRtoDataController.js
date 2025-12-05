@@ -1,91 +1,5 @@
 import dbPromise from "../db.js";
 
-// export const fetchMonthlyRtoData = async (req, res) => {
-//     let db;
-//     try {
-//         db = await dbPromise;
-//         const [rows] = await db.query(
-//             "SELECT * FROM rto_submissions ORDER BY id DESC");
-//             res.json({
-//                 success: true,
-//                 data: rows,
-//             });
-//     } catch (error) {
-//         console.error("❌ Error fetching Monthly RTO data:", error);
-//         res.status(500).json({
-//             success: false,
-//             message: "Server error while fetching Monthly RTO data",
-//         });
-//     }
-// };
-
-// Phase 2 Working with
-// export const fetchMonthlyRtoData = async (req, res) => {
-//     const { year, month } = req.query;
-//     let db;
-
-//     if (!year || !month) {
-//         return res.status(400).json({
-//             success: false,
-//             message: "Year and month are required"
-//         });
-//     }
-
-//     try {
-//         db = await dbPromise;
-
-//         const [rows] = await db.query(
-//             `
-//             SELECT
-//                 ROW_NUMBER() OVER () AS id,
-//                 marketplaces,
-//                 pickup_partner,
-//                 return_date,
-//                 sku_code,
-//                 product_title,
-//                 awb_id,
-//                 item_condition,
-//                 claim_raised,
-//                 ticket_id,
-//                 return_qty,
-//                 created_at,
-//                 created_by,
-//                 COUNT(*) AS total_orders,
-
-//                 -- Count rows where return_qty > 0 (actual RTO returned items)
-//                 SUM(CASE WHEN return_qty > 0 THEN return_qty ELSE 0 END) AS total_rto_qty,
-
-//                 ROUND(
-//                     (SUM(CASE WHEN return_qty > 0 THEN return_qty ELSE 0 END) /
-//                      NULLIF(COUNT(*),0)) * 100,
-//                 2) AS rto_percentage
-
-//             FROM rto_submissions
-//             WHERE DATE_FORMAT(return_date, '%Y') = ?
-//               AND DATE_FORMAT(return_date, '%m') = ?
-
-//             GROUP BY sku_code, product_title, marketplaces, pickup_partner, return_date, awb_id, item_condition, claim_raised, ticket_id, return_qty, created_at, created_by
-//             ORDER BY rto_percentage DESC;
-//             `,
-//             [year, month]
-//         );
-
-//         res.json({
-//             success: true,
-//             data: rows,
-//         });
-
-//     } catch (error) {
-//         console.error("❌ Error fetching Monthly RTO data:", error);
-
-//         res.status(500).json({
-//             success: false,
-//             message: "Server error while fetching Monthly RTO data",
-//         });
-//     }
-// };
-
-// Phase 3 Working with
 export const fetchMonthlyRtoData = async (req, res) => {
   const { year, month } = req.query;
 
@@ -99,47 +13,137 @@ export const fetchMonthlyRtoData = async (req, res) => {
   try {
     const db = await dbPromise;
 
-    // 1️⃣ GROUP BY SKU ONLY → SUM RETURN QTY
+    /* -----------------------------------------
+     * 1) Fetch RTO summary grouped by SKU
+     * ----------------------------------------- */
     const [skuSummary] = await db.query(
       `
-        SELECT 
-            sku_code,
-            MAX(product_title) AS product_title,
-            SUM(return_qty) AS total_rto_qty,
-            MIN(created_at) AS created_at,
-            MAX(created_by) AS created_by
-        FROM rto_submissions
-        WHERE DATE_FORMAT(created_at, '%Y') = ?
-        AND DATE_FORMAT(created_at, '%m') = ?
-        GROUP BY sku_code
+      SELECT 
+        sku_code,
+        MAX(product_title) AS product_title,
+        SUM(return_qty) AS total_rto_qty,
+        MIN(created_at) AS created_at,
+        MAX(created_by) AS created_by
+      FROM rto_submissions
+      WHERE YEAR(created_at) = ?
+        AND MONTH(created_at) = ?
+      GROUP BY sku_code
       `,
       [year, month]
     );
 
-    if (skuSummary.length === 0) {
+    // console.log("🔎 RTO Summary COUNT:", skuSummary.length);
+
+    if (!skuSummary.length) {
       return res.json({ success: true, data: [] });
     }
 
-    // 2️⃣ Condition breakdown per SKU
+    /* -----------------------------------------
+     * 2) Extract base SKUs (advanced parser)
+     * ----------------------------------------- */
+    function extractBaseSku(rawSku) {
+      if (!rawSku) return [];
+
+      let cleaned = rawSku.replace(/-PK\d*/gi, "");
+
+      const numeric = cleaned.match(/\b\d+\b/g);
+
+      if (numeric) {
+        return numeric.map(String);
+      }
+
+      return [rawSku];
+    }
+
+    let baseSkuList = [];
+
+    for (const r of skuSummary) {
+      const extracted = extractBaseSku(r.sku_code);
+      baseSkuList.push(...extracted);
+    }
+
+    baseSkuList = Array.from(new Set(baseSkuList));
+
+    // console.log("\n📌 BASE SKU CODES:", baseSkuList);
+
+    /* -----------------------------------------
+     * 3) Lookup SKU table for exact matches
+     * ----------------------------------------- */
+    const [skuRows] = await db.query(
+      `SELECT id, skuCode FROM sku WHERE skuCode IN (?)`,
+      [baseSkuList.length ? baseSkuList : ["__NO_MATCH__"]]
+    );
+
+    const skuIdMap = {};
+    skuRows.forEach((r) => (skuIdMap[r.skuCode] = r.id));
+
+    // console.log("\n📌 SKU TABLE MATCHES:", skuIdMap);
+
+    /* -----------------------------------------
+     * 4) Lookup COMBO table for non-matching base SKUs
+     * ----------------------------------------- */
+    const missingBases = baseSkuList.filter((b) => !skuIdMap[b]);
+
+    // console.log("\n📌 BASE SKUs NOT FOUND IN SKU TABLE:", missingBases);
+
+    let comboRows = [];
+    if (missingBases.length) {
+      [comboRows] = await db.query(
+        `SELECT id, combo_name FROM combo_sku WHERE combo_name IN (?)`,
+        [missingBases]
+      );
+    }
+
+    // console.log("\n📌 COMBO MATCHES:", comboRows);
+
+    const comboIdMap = {};
+    comboRows.forEach((c) => (comboIdMap[c.combo_name] = c.id));
+
+    /* -----------------------------------------
+     * 5) Fetch combo children
+     * ----------------------------------------- */
+    let comboChildMap = {};
+
+    if (comboRows.length) {
+      const comboIds = comboRows.map((r) => r.id);
+
+      const [childRows] = await db.query(
+        `
+        SELECT combo_sku_id, sku_id
+        FROM combo_sku_items
+        WHERE combo_sku_id IN (?)
+        `,
+        [comboIds]
+      );
+
+      childRows.forEach((cr) => {
+        const combo = comboRows.find((c) => c.id === cr.combo_sku_id);
+        if (!combo) return;
+        if (!comboChildMap[combo.combo_name])
+          comboChildMap[combo.combo_name] = [];
+        comboChildMap[combo.combo_name].push(cr.sku_id);
+      });
+    }
+
+    // console.log("\n📌 COMBO CHILD MAP:", comboChildMap);
+
+    /* -----------------------------------------
+     * 6) Condition counts
+     * ----------------------------------------- */
     const [conditionCounts] = await db.query(
       `
-        SELECT 
-            sku_code,
-            item_condition,
-            COUNT(*) AS count
-        FROM rto_submissions
-        WHERE DATE_FORMAT(created_at, '%Y') = ?
-        AND DATE_FORMAT(created_at, '%m') = ?
-        GROUP BY sku_code, item_condition
+      SELECT sku_code, item_condition, COUNT(*) AS count
+      FROM rto_submissions
+      WHERE YEAR(created_at) = ?
+        AND MONTH(created_at) = ?
+      GROUP BY sku_code, item_condition
       `,
       [year, month]
     );
 
     const condMap = {};
-
     conditionCounts.forEach((row) => {
       const sku = row.sku_code;
-
       if (!condMap[sku]) {
         condMap[sku] = {
           good: 0,
@@ -150,47 +154,105 @@ export const fetchMonthlyRtoData = async (req, res) => {
         };
       }
 
-      const c = row.item_condition.toLowerCase();
-
-      if (c.includes("good")) condMap[sku].good = row.count;
-      else if (c.includes("damaged")) condMap[sku].damaged = row.count;
-      else if (c.includes("missing")) condMap[sku].missing = row.count;
-      else if (c.includes("wrong")) condMap[sku].wrong_return = row.count;
-      else if (c.includes("used")) condMap[sku].used = row.count;
+      const cond = row.item_condition.toLowerCase();
+      if (cond.includes("good")) condMap[sku].good += row.count;
+      else if (cond.includes("damaged")) condMap[sku].damaged += row.count;
+      else if (cond.includes("missing")) condMap[sku].missing += row.count;
+      else if (cond.includes("wrong")) condMap[sku].wrong_return += row.count;
+      else if (cond.includes("used")) condMap[sku].used += row.count;
     });
 
-    // 3️⃣ Build final rows for UI
-    const finalRows = skuSummary.map((r) => ({
-      id: r.sku_code,
-      sku_code: r.sku_code,
-      product_title: r.product_title,
-      total_rto_qty: r.total_rto_qty,
-      total_orders: 0,
-      rto_percentage: 0,
-      created_at: r.created_at,
-      created_by: r.created_by,
+    /* -----------------------------------------
+     * 🚀 7) Load ALL orders & order_items ONCE (major speed boost)
+     * ----------------------------------------- */
+    const [orderItemRows] = await db.query(
+      `SELECT sku_id, order_id FROM order_items`
+    );
 
-      // Condition counts added
-      ...(condMap[r.sku_code] || {
-        good: 0,
-        damaged: 0,
-        missing: 0,
-        wrong_return: 0,
-        used: 0,
-      }),
-    }));
+    const [orderRows] = await db.query(
+      `
+      SELECT id
+      FROM orders
+      WHERE orderDateTime >= CONCAT(?, '-', ?, '-01')
+      AND orderDateTime <  CONCAT(?, '-', ?, '-31')
+      `,
+      [year, month, year, month]
+    );
 
-    res.json({ success: true, data: finalRows });
+    const validOrderIds = new Set(orderRows.map((o) => o.id));
 
+    // Build sku → order IDs map
+    const skuOrderMap = {};
+    orderItemRows.forEach((oi) => {
+      if (!skuOrderMap[oi.sku_id]) skuOrderMap[oi.sku_id] = new Set();
+      if (validOrderIds.has(oi.order_id)) {
+        skuOrderMap[oi.sku_id].add(oi.order_id);
+      }
+    });
+
+    /* -----------------------------------------
+     * 8) Compute total orders per SKU (FAST)
+     * ----------------------------------------- */
+    const finalRows = [];
+
+    for (const row of skuSummary) {
+      const origSku = row.sku_code;
+      const extractedBases = extractBaseSku(origSku);
+
+      let childSkuIds = [];
+
+      for (const base of extractedBases) {
+        if (skuIdMap[base]) {
+          childSkuIds.push(skuIdMap[base]);
+        } else if (comboChildMap[base]) {
+          childSkuIds.push(...comboChildMap[base]);
+        }
+      }
+
+      //   console.log(`\n👉 SKU: ${origSku} → Candidate IDs:`, childSkuIds);
+
+      childSkuIds = Array.from(new Set(childSkuIds));
+
+      let totalOrders = 0;
+
+      childSkuIds.forEach((id) => {
+        if (skuOrderMap[id]) {
+          totalOrders += skuOrderMap[id].size;
+        }
+      });
+
+      //   console.log(`✔ SQL COUNT for ${origSku}:`, totalOrders);
+
+      const rtoPercentage =
+        totalOrders > 0
+          ? ((row.total_rto_qty / totalOrders) * 100).toFixed(2)
+          : 0;
+
+      finalRows.push({
+        id: origSku,
+        sku_code: origSku,
+        product_title: row.product_title,
+        total_rto_qty: row.total_rto_qty,
+        total_orders: totalOrders,
+        rto_percentage: rtoPercentage,
+        created_at: row.created_at,
+        created_by: row.created_by,
+        ...(condMap[origSku] || {
+          good: 0,
+          damaged: 0,
+          missing: 0,
+          wrong_return: 0,
+          used: 0,
+        }),
+      });
+    }
+
+    return res.json({ success: true, data: finalRows });
   } catch (err) {
-    console.error("❌ ERROR (Monthly RTO Data):", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error while fetching Monthly RTO data",
-    });
+    console.error("❌ ERROR (fetchMonthlyRtoData):", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 export const fetchMonthlyRtoBreakdown = async (req, res) => {
   const { sku, year, month } = req.query;
@@ -205,6 +267,9 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
   try {
     const db = await dbPromise;
 
+    /* ---------------------------------------------------------
+     * 1) Fetch RTO breakdown rows
+     * --------------------------------------------------------- */
     const [rows] = await db.query(
       `
         SELECT 
@@ -216,30 +281,126 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
           return_qty
         FROM rto_submissions
         WHERE sku_code = ?
-        AND DATE_FORMAT(created_at, '%Y') = ?
-        AND DATE_FORMAT(created_at, '%m') = ?
+        AND YEAR(created_at) = ?
+        AND MONTH(created_at) = ?
         ORDER BY marketplaces, pickup_partner;
       `,
       [sku, year, month]
     );
 
-    if (rows.length === 0) {
+    if (!rows.length) {
       return res.json({ success: true, data: [] });
     }
 
-    // ⭐ FINAL FIX: Correct grouping map
+    /* ---------------------------------------------------------
+     * 2) Extract base SKUs (faster regex)
+     * --------------------------------------------------------- */
+    const cleanedSku = sku.replace(/-PK\d*/gi, "");
+    const extractedBases = cleanedSku.match(/\b\d+\b/g) || [cleanedSku];
+
+    /* ---------------------------------------------------------
+     * 3) Fetch SKU IDs + Combo children in 1 pass
+     * --------------------------------------------------------- */
+    const [skuRows] = await db.query(
+      `SELECT id, skuCode FROM sku WHERE skuCode IN (?)`,
+      [extractedBases]
+    );
+
+    const skuIdMap = Object.fromEntries(
+      skuRows.map((s) => [s.skuCode, s.id])
+    );
+
+    const missingList = extractedBases.filter((b) => !skuIdMap[b]);
+    let comboChildIds = [];
+
+    if (missingList.length) {
+      const [comboRows] = await db.query(
+        `SELECT id FROM combo_sku WHERE combo_name IN (?)`,
+        [missingList]
+      );
+
+      if (comboRows.length) {
+        const comboIds = comboRows.map((c) => c.id);
+
+        const [childRows] = await db.query(
+          `SELECT sku_id FROM combo_sku_items WHERE combo_sku_id IN (?)`,
+          [comboIds]
+        );
+
+        comboChildIds = childRows.map((r) => r.sku_id);
+      }
+    }
+
+    const skuIdList = [...new Set([...Object.values(skuIdMap), ...comboChildIds])];
+
+    /* ---------------------------------------------------------
+     * 4) Fetch orders + order items together (WAY faster)
+     * --------------------------------------------------------- */
+    const [orderRows] = await db.query(
+      `
+      SELECT id, marketplace
+      FROM orders
+      WHERE orderDateTime >= CONCAT(?, '-', ?, '-01')
+      AND orderDateTime <  CONCAT(?, '-', ?, '-31')
+      `,
+      [year, month, year, month]
+    );
+
+    if (!orderRows.length) {
+      // No orders this month → total_orders = 0 for all groups
+      return res.json({
+        success: true,
+        data: rows.map((r) => ({
+          marketplaces: r.marketplaces,
+          pickup_partner: r.pickup_partner,
+          sku_code: sku,
+          total_orders: 0,
+          total_rto_qty: r.return_qty,
+          good: r.item_condition.includes("good") ? r.return_qty : 0,
+          damaged: r.item_condition.includes("damaged") ? r.return_qty : 0,
+          missing: r.item_condition.includes("missing") ? r.return_qty : 0,
+          wrong_return: r.item_condition.includes("wrong") ? r.return_qty : 0,
+          used: r.item_condition.includes("used") ? r.return_qty : 0,
+          ticket_id: r.ticket_id || "-",
+        })),
+      });
+    }
+
+    const validOrderIds = new Set(orderRows.map((o) => o.id));
+
+    // Order lookup is now O(1)
+    const [orderItemRows] = await db.query(
+      `
+      SELECT sku_id, order_id 
+      FROM order_items
+      WHERE sku_id IN (?)
+      `,
+      [skuIdList]
+    );
+
+    /* ---------------------------------------------------------
+     * 5) Precompute ALL matched orders (remove loop inside loop)
+     * --------------------------------------------------------- */
+    const matchedOrders = new Set(
+      orderItemRows
+        .filter((oi) => validOrderIds.has(oi.order_id))
+        .map((oi) => oi.order_id)
+    );
+
+    /* ---------------------------------------------------------
+     * 6) Construct breakdown map (faster object operations)
+     * --------------------------------------------------------- */
     const breakdownMap = {};
 
-    rows.forEach((r) => {
+    for (const r of rows) {
       const key = `${r.marketplaces}__${r.pickup_partner}`;
 
-      // Create group if not exists
       if (!breakdownMap[key]) {
         breakdownMap[key] = {
           marketplaces: r.marketplaces,
           pickup_partner: r.pickup_partner,
-          sku_code: r.sku_code,
-          total_orders: 0,
+          sku_code: sku,
+          total_orders: matchedOrders.size,
           total_rto_qty: 0,
           good: 0,
           damaged: 0,
@@ -250,25 +411,25 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
         };
       }
 
-      // Add qty
-      breakdownMap[key].total_rto_qty += r.return_qty;
+      const group = breakdownMap[key];
 
-      // Clean condition
-      const cond = (r.item_condition || "").toLowerCase().trim();
+      group.total_rto_qty += r.return_qty;
 
-      if (cond.includes("good")) breakdownMap[key].good += r.return_qty;
-      else if (cond.includes("damaged")) breakdownMap[key].damaged += r.return_qty;
-      else if (cond.includes("missing")) breakdownMap[key].missing += r.return_qty;
-      else if (cond.includes("wrong")) breakdownMap[key].wrong_return += r.return_qty;
-      else if (cond.includes("used")) breakdownMap[key].used += r.return_qty;
-    });
+      const cond = r.item_condition?.toLowerCase();
+      if (cond.includes("good")) group.good += r.return_qty;
+      else if (cond.includes("damaged")) group.damaged += r.return_qty;
+      else if (cond.includes("missing")) group.missing += r.return_qty;
+      else if (cond.includes("wrong")) group.wrong_return += r.return_qty;
+      else if (cond.includes("used")) group.used += r.return_qty;
+    }
 
-    // RETURN AS ARRAY
+    /* ---------------------------------------------------------
+     * 7) SEND RESPONSE
+     * --------------------------------------------------------- */
     return res.json({
       success: true,
       data: Object.values(breakdownMap),
     });
-
   } catch (err) {
     console.error("❌ Breakdown API Error:", err);
     return res.status(500).json({
@@ -277,9 +438,4 @@ export const fetchMonthlyRtoBreakdown = async (req, res) => {
     });
   }
 };
-
-
-
-
-
 
