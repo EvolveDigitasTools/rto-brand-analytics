@@ -18,7 +18,7 @@ export const Register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
-      "INSERT INTO rto_users (name, email, password, role) VALUES (?, ?, ?, ?)",
+      "INSERT INTO all_users (name, email, password, role) VALUES (?, ?, ?, ?)",
       [name, email, hashedPassword, userRole]
     );
 
@@ -37,7 +37,7 @@ export const Login = async (req, res) => {
         return res.status(400).json({ success: false, message: "Missing email or password" });
         }
 
-        const [users] = await db.query("SELECT * FROM rto_users WHERE email = ?", [email]);
+        const [users] = await db.query("SELECT * FROM all_users WHERE email = ?", [email]);
         if (users.length === 0) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
@@ -71,7 +71,7 @@ export const deleteUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "Superadmin cannot delete themselves" });
     }
 
-    const [result] = await db.query("DELETE FROM rto_users WHERE id = ?", [userId]);
+    const [result] = await db.query("DELETE FROM all_users WHERE id = ?", [userId]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -95,7 +95,7 @@ try {
     return res.status(400).json({ success: false, message: "Invalid role" });
     }
 
-    const [result] = await db.query("UPDATE rto_users SET role = ? WHERE id = ?", [role, id]);
+    const [result] = await db.query("UPDATE all_users SET role = ? WHERE id = ?", [role, id]);
     if (result.affectedRows === 0) {
     return res.status(404).json({ success: false, message: "User not found" });
     }

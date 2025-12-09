@@ -18,7 +18,7 @@ const authorize = (roles = []) => {
       const token = authHeader.split(" ")[1];
       const decoded = jwt.verify(token, JWT_SECRET);
       
-      const [users] = await db.query("SELECT id, name, email, role FROM rto_users WHERE id = ?", [decoded.id]);
+      const [users] = await db.query("SELECT id, name, email, role FROM all_users WHERE id = ?", [decoded.id]);
       if (users.length === 0) {
         return res.status(404).json({ success: false, message: "User not found" });
       }
@@ -50,7 +50,7 @@ router.get("/me", authorize(['user', 'admin', 'superadmin']), async (req, res) =
 // 🟢 ADMIN-ONLY ROUTE - List all users
 router.get("/users", authorize(['admin', 'superadmin']), async (req, res) => {
   try {
-    const [users] = await db.query("SELECT id, name, email, role, created_at FROM rto_users");
+    const [users] = await db.query("SELECT id, name, email, role, created_at FROM all_users");
     res.json({ success: true, users });
   } catch (err) {
     console.error("Users List Error:", err);
